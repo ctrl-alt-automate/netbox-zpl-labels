@@ -114,6 +114,71 @@ class LabelData:
         )
 
 
+# Dangerous ZPL commands that could affect printer configuration or security
+# These commands can delete files, modify network settings, or execute stored formats
+DANGEROUS_ZPL_COMMANDS = [
+    "^ID",  # Image delete - deletes files from printer storage
+    "^DF",  # Download format - stores data on printer flash
+    "^XF",  # Recall format - executes stored format (potential code execution)
+    "~DY",  # Download graphics/fonts - writes to flash storage
+    "~DG",  # Download graphic - writes to flash storage
+    "~DN",  # Delete network config
+    "~NC",  # Set network configuration
+    "~NR",  # Network reset
+    "~JR",  # Power off after print
+    "~PS",  # Print start toggle - can disable printing
+    "~PP",  # Programmable pause
+    "~HS",  # Host status return (info disclosure, less dangerous)
+    "^HH",  # Print configuration label (info disclosure)
+    "~WC",  # Print configuration label
+    "^JU",  # Configuration update
+    "~JC",  # Set clock
+    "~RO",  # Reset advanced counter
+]
+
+# Pattern to detect dangerous commands (case-insensitive) - just matches the command prefix
+DANGEROUS_ZPL_DETECT_PATTERN = re.compile(
+    r"(" + "|".join(re.escape(cmd) for cmd in DANGEROUS_ZPL_COMMANDS) + r")",
+    re.IGNORECASE,
+)
+
+# Pattern to remove dangerous commands WITH their parameters
+# Matches command prefix followed by any characters until next ^ or ~ or end of string
+DANGEROUS_ZPL_SANITIZE_PATTERN = re.compile(
+    r"("
+    + "|".join(re.escape(cmd) for cmd in DANGEROUS_ZPL_COMMANDS)
+    + r")[^\^~]*",  # Match command + everything until next command or end
+    re.IGNORECASE,
+)
+
+
+def validate_zpl_template(template: str) -> tuple[bool, list[str]]:
+    """Validate a ZPL template for potentially dangerous commands.
+
+    Args:
+        template: ZPL template string to validate
+
+    Returns:
+        Tuple of (is_valid, list_of_dangerous_commands_found)
+    """
+    found_commands = DANGEROUS_ZPL_DETECT_PATTERN.findall(template.upper())
+    # Remove duplicates while preserving order
+    unique_commands = list(dict.fromkeys(found_commands))
+    return len(unique_commands) == 0, unique_commands
+
+
+def sanitize_zpl_template(template: str) -> str:
+    """Remove dangerous commands and their parameters from a ZPL template.
+
+    Args:
+        template: ZPL template string to sanitize
+
+    Returns:
+        Sanitized ZPL template with dangerous commands and parameters removed
+    """
+    return DANGEROUS_ZPL_SANITIZE_PATTERN.sub("", template)
+
+
 class ZPLGenerator:
     """Generator for ZPL label code.
 

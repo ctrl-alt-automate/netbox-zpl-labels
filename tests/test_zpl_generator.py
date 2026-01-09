@@ -3,9 +3,12 @@
 from unittest.mock import MagicMock
 
 from netbox_zpl_labels.zpl.generator import (
+    DANGEROUS_ZPL_COMMANDS,
     LabelData,
     SafeDict,
     ZPLGenerator,
+    sanitize_zpl_template,
+    validate_zpl_template,
 )
 
 
@@ -256,3 +259,77 @@ class TestSafeDict:
         d = SafeDict({"name": "Test"})
         result = "{name}: {value}".format_map(d)
         assert result == "Test: {value}"
+
+
+class TestZPLInjectionProtection:
+    """Tests for ZPL template injection protection."""
+
+    def test_validate_safe_template(self):
+        """Test that safe templates pass validation."""
+        safe_template = "^XA^FO20,20^ADN,36,20^FD{cable_id}^FS^XZ"
+        is_valid, dangerous = validate_zpl_template(safe_template)
+        assert is_valid is True
+        assert dangerous == []
+
+    def test_validate_detects_image_delete(self):
+        """Test that ^ID (image delete) is detected."""
+        malicious = "^XA^IDE:LOGO.GRF^FO20,20^FDTest^FS^XZ"
+        is_valid, dangerous = validate_zpl_template(malicious)
+        assert is_valid is False
+        assert "^ID" in dangerous
+
+    def test_validate_detects_download_format(self):
+        """Test that ^DF (download format) is detected."""
+        malicious = "^XA^DFE:MALICIOUS.ZPL^FO20,20^FDTest^FS^XZ"
+        is_valid, dangerous = validate_zpl_template(malicious)
+        assert is_valid is False
+        assert "^DF" in dangerous
+
+    def test_validate_detects_recall_format(self):
+        """Test that ^XF (recall format) is detected."""
+        malicious = "^XA^XFE:STORED.ZPL^FS^XZ"
+        is_valid, dangerous = validate_zpl_template(malicious)
+        assert is_valid is False
+        assert "^XF" in dangerous
+
+    def test_validate_detects_network_commands(self):
+        """Test that network configuration commands are detected."""
+        malicious = "^XA~NC192.168.1.1^FDTest^FS^XZ"
+        is_valid, dangerous = validate_zpl_template(malicious)
+        assert is_valid is False
+        assert "~NC" in dangerous
+
+    def test_validate_case_insensitive(self):
+        """Test that detection is case-insensitive."""
+        malicious = "^XA^df E:test.zpl^XZ"  # lowercase ^df
+        is_valid, dangerous = validate_zpl_template(malicious)
+        assert is_valid is False
+
+    def test_validate_detects_multiple_dangerous_commands(self):
+        """Test that multiple dangerous commands are all detected."""
+        malicious = "^XA^IDE:*.GRF^DFE:BAD.ZPL^~NCBAD^XZ"
+        is_valid, dangerous = validate_zpl_template(malicious)
+        assert is_valid is False
+        assert len(dangerous) == 3
+
+    def test_sanitize_removes_dangerous_commands_with_params(self):
+        """Test that sanitize removes dangerous commands AND their parameters."""
+        malicious = "^XA^IDE:LOGO.GRF^FO20,20^FDTest^FS^XZ"
+        sanitized = sanitize_zpl_template(malicious)
+        assert "^ID" not in sanitized
+        assert "E:LOGO.GRF" not in sanitized  # Parameters should also be removed
+        assert "^FO20,20" in sanitized
+        assert "^FDTest^FS" in sanitized
+
+    def test_sanitize_preserves_safe_content(self):
+        """Test that sanitize preserves safe ZPL content."""
+        safe = "^XA^FO20,20^ADN,36,20^FDHello World^FS^BQN,2,4^FDLA,http://test^FS^XZ"
+        sanitized = sanitize_zpl_template(safe)
+        assert sanitized == safe
+
+    def test_all_dangerous_commands_listed(self):
+        """Test that we have a comprehensive list of dangerous commands."""
+        # At minimum, these critical commands should be blocked
+        critical_commands = ["^ID", "^DF", "^XF", "~DY", "~NC"]
+        for cmd in critical_commands:
+            assert cmd in DANGEROUS_ZPL_COMMANDS, f"{cmd} should be in dangerous commands list"

@@ -244,6 +244,8 @@ class LabelTemplate(NetBoxModel):
 
     def clean(self) -> None:
         """Validate template configuration."""
+        from .zpl.generator import validate_zpl_template
+
         super().clean()
 
         # Validate ZPL template structure
@@ -256,6 +258,19 @@ class LabelTemplate(NetBoxModel):
             if not zpl.endswith("^XZ"):
                 raise ValidationError(
                     {"zpl_template": _("ZPL template must end with ^XZ (format end).")}
+                )
+
+            # Check for dangerous ZPL commands
+            is_safe, dangerous_commands = validate_zpl_template(zpl)
+            if not is_safe:
+                raise ValidationError(
+                    {
+                        "zpl_template": _(
+                            "Template contains dangerous ZPL commands that are not "
+                            "allowed: %(commands)s"
+                        )
+                        % {"commands": ", ".join(dangerous_commands)}
+                    }
                 )
 
         # Validate dimensions are positive
