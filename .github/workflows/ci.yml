@@ -158,6 +158,11 @@ jobs:
           cd /opt/netbox/netbox
           python manage.py migrate --no-input
 
+      - name: Create plugin migrations
+        run: |
+          cd /opt/netbox/netbox
+          python manage.py makemigrations netbox_zpl_labels --no-input
+
       - name: Run plugin migrations
         run: |
           cd /opt/netbox/netbox
