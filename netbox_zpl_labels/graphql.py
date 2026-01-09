@@ -5,4 +5,4 @@ investigation with NetBox's plugin system.
 """
 
 # Empty schema - GraphQL queries will be added in a future release
-schema = []
+schema: list = []
