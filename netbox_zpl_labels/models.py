@@ -119,6 +119,19 @@ class ZPLPrinter(NetBoxModel):
         blank=True,
         verbose_name=_("description"),
     )
+    last_checked = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name=_("last checked"),
+        help_text=_("Last time the printer status was checked"),
+    )
+    last_online = models.BooleanField(
+        default=None,
+        blank=True,
+        null=True,
+        verbose_name=_("last online status"),
+        help_text=_("Online status from last check"),
+    )
     comments = models.TextField(
         blank=True,
         verbose_name=_("comments"),
@@ -173,6 +186,18 @@ class ZPLPrinter(NetBoxModel):
     def dots_per_mm(self) -> float:
         """Return dots per millimeter for this printer's DPI."""
         return float(self.dpi) / 25.4
+
+    def update_status(self, online: bool) -> None:
+        """Update the printer's last checked status.
+
+        Args:
+            online: Whether the printer was online during the check
+        """
+        from django.utils import timezone
+
+        self.last_checked = timezone.now()
+        self.last_online = online
+        self.save(update_fields=["last_checked", "last_online"])
 
 
 class LabelTemplate(NetBoxModel):

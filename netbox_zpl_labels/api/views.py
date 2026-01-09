@@ -59,6 +59,60 @@ class ZPLPrinterViewSet(NetBoxModelViewSet):
             status=status.HTTP_200_OK if success else status.HTTP_503_SERVICE_UNAVAILABLE,
         )
 
+    @action(detail=True, methods=["get"])
+    def status(self, request, pk=None):
+        """Get real-time printer status.
+
+        GET /api/plugins/zpl-labels/printers/{id}/status/
+
+        Queries the printer directly for status information including
+        paper/ribbon status and online state. Also updates the printer's
+        last_checked and last_online fields.
+        """
+        printer = self.get_object()
+        client = ZPLPrinterClient(host=printer.host, port=printer.port)
+
+        # Test connection first
+        connection_result = client.test_connection()
+        online = connection_result.success
+
+        # Update printer status tracking
+        printer.update_status(online=online)
+
+        if not online:
+            return Response(
+                {
+                    "printer_id": printer.pk,
+                    "printer_name": printer.name,
+                    "online": False,
+                    "connection_error": connection_result.error,
+                    "paper": None,
+                    "ribbon": None,
+                    "raw_status": None,
+                    "last_checked": printer.last_checked.isoformat(),
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # Get detailed status
+        printer_status = client.get_printer_status()
+
+        return Response(
+            {
+                "printer_id": printer.pk,
+                "printer_name": printer.name,
+                "online": True,
+                "connection_error": None,
+                "paper": printer_status.get("paper") if printer_status else None,
+                "ribbon": printer_status.get("ribbon") if printer_status else None,
+                "raw_status": (
+                    printer_status.get("raw_response") if printer_status else None
+                ),
+                "last_checked": printer.last_checked.isoformat(),
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class LabelTemplateViewSet(NetBoxModelViewSet):
     """API viewset for label templates."""
