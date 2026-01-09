@@ -35,8 +35,8 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     # Required settings (none required)
     required_settings: list[str] = []
 
-    # GraphQL schema - disabled for now pending strawberry compatibility investigation
-    # graphql_schema = "graphql.schema"
+    # GraphQL schema (gracefully handles missing strawberry)
+    graphql_schema = "graphql.schema"
 
     def ready(self):
         """Called when the plugin is loaded.
