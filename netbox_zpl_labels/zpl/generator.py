@@ -234,30 +234,30 @@ def create_label_data(obj: Any, base_url: str = "") -> dict[str, str]:
     model_name = obj.__class__.__name__.lower()
 
     if model_name == "cable":
-        data = LabelData.from_cable(obj, base_url)
+        cable_data = LabelData.from_cable(obj, base_url)
         return {
-            "cable_id": data.cable_id,
-            "cable_url": data.cable_url,
-            "term_a_device": data.term_a_device,
-            "term_a_interface": data.term_a_interface,
-            "term_b_device": data.term_b_device,
-            "term_b_interface": data.term_b_interface,
-            "length": data.length,
-            "color": data.color,
-            "type": data.cable_type,
-            "description": data.description,
-            "date": data.date,
+            "cable_id": cable_data.cable_id,
+            "cable_url": cable_data.cable_url,
+            "term_a_device": cable_data.term_a_device,
+            "term_a_interface": cable_data.term_a_interface,
+            "term_b_device": cable_data.term_b_device,
+            "term_b_interface": cable_data.term_b_interface,
+            "length": cable_data.length,
+            "color": cable_data.color,
+            "type": cable_data.cable_type,
+            "description": cable_data.description,
+            "date": cable_data.date,
             # Common fields for cross-object templates
-            "object_id": data.cable_id,
-            "object_url": data.cable_url,
+            "object_id": cable_data.cable_id,
+            "object_url": cable_data.cable_url,
             "object_type": "Cable",
         }
     elif model_name == "device":
-        data = DeviceLabelData.from_device(obj, base_url)
-        result = data.to_dict()
+        device_data = DeviceLabelData.from_device(obj, base_url)
+        result = device_data.to_dict()
         # Add common fields
-        result["object_id"] = data.device_name
-        result["object_url"] = data.device_url
+        result["object_id"] = device_data.device_name
+        result["object_url"] = device_data.device_url
         result["object_type"] = "Device"
         return result
     else:
