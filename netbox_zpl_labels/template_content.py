@@ -6,7 +6,7 @@ from netbox.plugins import PluginTemplateExtension
 class CablePrintButton(PluginTemplateExtension):
     """Add a print label button to cable detail pages."""
 
-    model = "dcim.cable"
+    models = ["dcim.cable"]
 
     def buttons(self):
         """Return button HTML for the cable detail page."""
@@ -48,7 +48,7 @@ class CablePrintButton(PluginTemplateExtension):
 class CableListPrintButton(PluginTemplateExtension):
     """Add bulk print button to cable list page."""
 
-    model = "dcim.cable"
+    models = ["dcim.cable"]
 
     def list_buttons(self):
         """Add button to cable list page actions."""
