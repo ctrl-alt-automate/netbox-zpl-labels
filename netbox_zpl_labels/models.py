@@ -156,6 +156,19 @@ class ZPLPrinter(NetBoxModel):
     def get_status_color(self) -> str:
         return str(PrinterStatusChoices.colors.get(self.status, "gray"))
 
+    def clone(self) -> dict:
+        """Return a dictionary of attributes for cloning this printer.
+
+        Used by NetBox's clone view to pre-populate the form.
+        """
+        return {
+            "port": self.port,
+            "dpi": self.dpi,
+            "status": self.status,
+            "location": self.location,
+            # Note: name and host are not cloned to force unique values
+        }
+
     @property
     def dots_per_mm(self) -> float:
         """Return dots per millimeter for this printer's DPI."""
@@ -286,6 +299,23 @@ class LabelTemplate(NetBoxModel):
                 is_default=False
             )
         super().save(*args, **kwargs)
+
+    def clone(self) -> dict:
+        """Return a dictionary of attributes for cloning this template.
+
+        Used by NetBox's clone view to pre-populate the form.
+        """
+        return {
+            "label_size": self.label_size,
+            "width_mm": self.width_mm,
+            "height_mm": self.height_mm,
+            "dpi": self.dpi,
+            "zpl_template": self.zpl_template,
+            "include_qr_code": self.include_qr_code,
+            "qr_magnification": self.qr_magnification,
+            # Note: name, is_default, and description are not cloned
+            # to force the user to provide unique values
+        }
 
     @property
     def width_dots(self) -> int:
