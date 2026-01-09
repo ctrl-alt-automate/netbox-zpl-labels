@@ -16,6 +16,7 @@ class NestedCableSerializer(WritableNestedSerializer):
         model = Cable
         fields = ["id", "url", "display", "label"]
 
+
 #
 # Nested Serializers
 #
