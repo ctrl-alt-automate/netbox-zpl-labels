@@ -7,6 +7,7 @@ from __future__ import annotations
 
 try:
     import strawberry
+
     STRAWBERRY_AVAILABLE = True
 except ImportError:
     STRAWBERRY_AVAILABLE = False
