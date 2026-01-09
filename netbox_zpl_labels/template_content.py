@@ -79,40 +79,15 @@ class CableListPrintButton(PluginTemplateExtension):
     models = ["dcim.cable"]
 
     def list_buttons(self):
-        """Add button to cable list page actions."""
-        view = self.context.get("view")
-        view_name = type(view).__name__ if view else "None"
-        model_from_qs = None
-        model_from_view = None
+        """Add button to cable list page actions.
 
-        if view and hasattr(view, "queryset"):
-            model_from_qs = getattr(view.queryset, "model", None)
-        if view and hasattr(view, "model"):
-            model_from_view = view.model
-
+        The 'models' attribute ensures this is only called on Cable list views,
+        so we can trust that and return the button directly.
+        """
         logger.warning(
             f"[ZPL DEBUG] CableListPrintButton.list_buttons() called - "
-            f"view: {view_name}, "
-            f"model from queryset: {model_from_qs}, "
-            f"model from view: {model_from_view}, "
-            f"context keys: {list(self.context.keys())}"
+            f"context keys: {list(self.context.keys())} - returning button HTML"
         )
-
-        # Check if we're on a Cable list view
-        if view and hasattr(view, "queryset"):
-            model = getattr(view.queryset, "model", None)
-            if model is not Cable:
-                logger.warning(f"[ZPL DEBUG] list_buttons() returning empty - queryset model is not Cable")
-                return ""
-        elif view and hasattr(view, "model"):
-            if view.model is not Cable:
-                logger.warning(f"[ZPL DEBUG] list_buttons() returning empty - view model is not Cable")
-                return ""
-        else:
-            logger.warning(f"[ZPL DEBUG] list_buttons() returning empty - can't determine model")
-            return ""
-
-        logger.warning(f"[ZPL DEBUG] list_buttons() returning button HTML for Cable list")
         return self.render("netbox_zpl_labels/inc/cable_list_button.html")
 
 
