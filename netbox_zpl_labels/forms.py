@@ -238,6 +238,25 @@ class LabelTemplateBulkEditForm(NetBoxModelBulkEditForm):
     nullable_fields: list[str] = []
 
 
+class LabelTemplateImportForm(NetBoxModelImportForm):
+    """Import form for label templates (CSV/JSON import)."""
+
+    class Meta:
+        model = LabelTemplate
+        fields = [
+            "name",
+            "description",
+            "label_size",
+            "width_mm",
+            "height_mm",
+            "dpi",
+            "zpl_template",
+            "include_qr_code",
+            "qr_magnification",
+            "is_default",
+        ]
+
+
 #
 # PrintJob Forms
 #

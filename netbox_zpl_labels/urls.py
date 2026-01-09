@@ -76,6 +76,11 @@ urlpatterns = [
         name="labeltemplate_add",
     ),
     path(
+        "templates/import/",
+        views.LabelTemplateBulkImportView.as_view(),
+        name="labeltemplate_import",
+    ),
+    path(
         "templates/edit/",
         views.LabelTemplateBulkEditView.as_view(),
         name="labeltemplate_bulk_edit",

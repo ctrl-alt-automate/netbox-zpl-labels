@@ -15,6 +15,7 @@ from .forms import (
     LabelTemplateBulkEditForm,
     LabelTemplateFilterForm,
     LabelTemplateForm,
+    LabelTemplateImportForm,
     PreviewLabelForm,
     PrintJobFilterForm,
     PrintLabelForm,
@@ -162,6 +163,13 @@ class LabelTemplateDeleteView(generic.ObjectDeleteView):
     """Delete view for label templates."""
 
     queryset = LabelTemplate.objects.all()
+
+
+class LabelTemplateBulkImportView(generic.BulkImportView):
+    """Bulk import view for label templates (CSV/JSON)."""
+
+    queryset = LabelTemplate.objects.all()
+    model_form = LabelTemplateImportForm
 
 
 class LabelTemplateBulkEditView(generic.BulkEditView):
