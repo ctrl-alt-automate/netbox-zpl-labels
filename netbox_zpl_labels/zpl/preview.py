@@ -304,9 +304,9 @@ def get_label_preview(
     # Get plugin settings
     from netbox.plugins import get_plugin_config
 
-    config = get_plugin_config("netbox_zpl_labels")
-    preview_backend = config.get("preview_backend", "labelary")
-    preview_url = config.get("preview_url", "")
+    # get_plugin_config requires plugin name AND parameter name
+    preview_backend = get_plugin_config("netbox_zpl_labels", "preview_backend")
+    preview_url = get_plugin_config("netbox_zpl_labels", "preview_url")
 
     if preview_backend == "binarykits":
         # Use BinaryKits.Zpl (self-hosted Docker)
