@@ -126,6 +126,42 @@ class ZPLPrinterTestConnectionView(View):
         return redirect(printer.get_absolute_url())
 
 
+class ZPLPrinterStatusHTMXView(View):
+    """HTMX partial view for real-time printer status."""
+
+    def get(self, request, pk):
+        from .zpl.printer import ZPLPrinterClient
+
+        printer = get_object_or_404(ZPLPrinter, pk=pk)
+        client = ZPLPrinterClient(host=printer.host, port=printer.port)
+
+        # Test connection
+        connection_result = client.test_connection()
+        online = connection_result.success
+
+        # Update printer status tracking
+        printer.update_status(online=online)
+
+        context = {
+            "online": online,
+            "error": connection_result.error if not online else None,
+            "paper": None,
+            "ribbon": None,
+            "last_checked": (
+                printer.last_checked.strftime("%H:%M:%S") if printer.last_checked else None
+            ),
+        }
+
+        # Get detailed status if online
+        if online:
+            status = client.get_printer_status()
+            if status:
+                context["paper"] = status.get("paper")
+                context["ribbon"] = status.get("ribbon")
+
+        return render(request, "netbox_zpl_labels/htmx/printer_status.html", context)
+
+
 #
 # LabelTemplate Views
 #

@@ -1,0 +1,31 @@
+{% load i18n %}
+{# Partial template for printer status indicator - loaded via HTMX #}
+<div id="printer-status-indicator" class="d-flex align-items-center gap-2">
+    {% if online %}
+    <span class="badge bg-success">
+        <i class="mdi mdi-check-circle"></i> {% trans "Online" %}
+    </span>
+    {% if paper %}
+    <span class="badge bg-{% if paper == 'ok' %}secondary{% else %}warning{% endif %}">
+        {% trans "Paper:" %} {{ paper }}
+    </span>
+    {% endif %}
+    {% if ribbon %}
+    <span class="badge bg-{% if ribbon == 'ok' %}secondary{% else %}warning{% endif %}">
+        {% trans "Ribbon:" %} {{ ribbon }}
+    </span>
+    {% endif %}
+    {% else %}
+    <span class="badge bg-danger">
+        <i class="mdi mdi-close-circle"></i> {% trans "Offline" %}
+    </span>
+    {% if error %}
+    <span class="text-muted small">{{ error }}</span>
+    {% endif %}
+    {% endif %}
+    {% if last_checked %}
+    <span class="text-muted small">
+        {% trans "Checked:" %} {{ last_checked }}
+    </span>
+    {% endif %}
+</div>

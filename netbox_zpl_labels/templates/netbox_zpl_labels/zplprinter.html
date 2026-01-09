@@ -12,9 +12,17 @@
 {% endblock %}
 
 {% block extra_controls %}
+<button type="button" class="btn btn-sm btn-outline-primary"
+        hx-get="{% url 'plugins:netbox_zpl_labels:zplprinter_status_htmx' pk=object.pk %}"
+        hx-target="#printer-live-status"
+        hx-swap="innerHTML"
+        hx-indicator="#status-spinner">
+    <i class="mdi mdi-lan-connect"></i> {% trans "Check Status" %}
+    <span id="status-spinner" class="htmx-indicator spinner-border spinner-border-sm ms-1" role="status"></span>
+</button>
 <a href="{% url 'plugins:netbox_zpl_labels:zplprinter_test' pk=object.pk %}"
-   class="btn btn-sm btn-outline-primary">
-    <i class="mdi mdi-lan-connect"></i> {% trans "Test Connection" %}
+   class="btn btn-sm btn-outline-secondary">
+    <i class="mdi mdi-refresh"></i> {% trans "Test & Update" %}
 </a>
 {% endblock %}
 
@@ -79,6 +87,30 @@
                 <p class="text-muted small">
                     {% trans "This printer receives ZPL commands directly via TCP port 9100. No driver installation required." %}
                 </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h5 class="card-header">
+                {% trans "Live Status" %}
+                <button type="button" class="btn btn-sm btn-link float-end p-0"
+                        hx-get="{% url 'plugins:netbox_zpl_labels:zplprinter_status_htmx' pk=object.pk %}"
+                        hx-target="#printer-live-status"
+                        hx-swap="innerHTML"
+                        hx-indicator="#live-status-spinner"
+                        title="{% trans 'Refresh status' %}">
+                    <i class="mdi mdi-refresh"></i>
+                    <span id="live-status-spinner" class="htmx-indicator spinner-border spinner-border-sm" role="status"></span>
+                </button>
+            </h5>
+            <div class="card-body" id="printer-live-status"
+                 hx-get="{% url 'plugins:netbox_zpl_labels:zplprinter_status_htmx' pk=object.pk %}"
+                 hx-trigger="load, every 30s"
+                 hx-swap="innerHTML">
+                <div class="text-muted">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    {% trans "Checking status..." %}
+                </div>
             </div>
         </div>
 

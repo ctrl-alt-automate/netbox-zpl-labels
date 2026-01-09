@@ -53,6 +53,11 @@ urlpatterns = [
         name="zplprinter_test",
     ),
     path(
+        "printers/<int:pk>/status/",
+        views.ZPLPrinterStatusHTMXView.as_view(),
+        name="zplprinter_status_htmx",
+    ),
+    path(
         "printers/<int:pk>/changelog/",
         ObjectChangeLogView.as_view(),
         name="zplprinter_changelog",
