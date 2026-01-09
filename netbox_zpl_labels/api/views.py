@@ -3,9 +3,11 @@
 from dcim.models import Cable
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from netbox.api.authentication import TokenAuthentication
 from netbox.api.viewsets import NetBoxModelViewSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -132,6 +134,9 @@ class LabelGenerateView(APIView):
     POST /api/plugins/zpl-labels/labels/generate/
     """
 
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = GenerateLabelSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -183,6 +188,9 @@ class LabelPrintView(APIView):
 
     POST /api/plugins/zpl-labels/labels/print/
     """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = PrintLabelSerializer(data=request.data)
@@ -305,6 +313,9 @@ class LabelPreviewView(APIView):
 
     GET /api/plugins/zpl-labels/labels/preview/?cable_id=X&template_id=Y
     """
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
         cable_id = request.query_params.get("cable_id")
