@@ -1,11 +1,8 @@
 """GraphQL types for NetBox ZPL Labels plugin."""
 
-from typing import Annotated
-
 import strawberry
 import strawberry_django
 
-from .filtersets import LabelTemplateFilterSet, PrintJobFilterSet, ZPLPrinterFilterSet
 from .models import LabelTemplate, PrintJob, ZPLPrinter
 
 # Default pagination limits
@@ -13,21 +10,21 @@ DEFAULT_LIMIT = 100
 MAX_LIMIT = 1000
 
 
-@strawberry_django.type(ZPLPrinter, fields="__all__", filters=ZPLPrinterFilterSet)
+@strawberry_django.type(ZPLPrinter, fields="__all__")
 class ZPLPrinterType:
     """GraphQL type for ZPLPrinter."""
 
     pass
 
 
-@strawberry_django.type(LabelTemplate, fields="__all__", filters=LabelTemplateFilterSet)
+@strawberry_django.type(LabelTemplate, fields="__all__")
 class LabelTemplateType:
     """GraphQL type for LabelTemplate."""
 
     pass
 
 
-@strawberry_django.type(PrintJob, fields="__all__", filters=PrintJobFilterSet)
+@strawberry_django.type(PrintJob, fields="__all__")
 class PrintJobType:
     """GraphQL type for PrintJob."""
 
@@ -46,10 +43,8 @@ class Query:
     @strawberry.field
     def zpl_printer_list(
         self,
-        filters: Annotated[ZPLPrinterFilterSet, strawberry.argument(description="Filter options")]
-        | None = None,
-        limit: Annotated[int, strawberry.argument(description="Max results")] = DEFAULT_LIMIT,
-        offset: Annotated[int, strawberry.argument(description="Skip results")] = 0,
+        limit: int = DEFAULT_LIMIT,
+        offset: int = 0,
     ) -> list[ZPLPrinterType]:
         """List ZPL printers with pagination."""
         limit = min(limit, MAX_LIMIT)
@@ -64,12 +59,8 @@ class Query:
     @strawberry.field
     def label_template_list(
         self,
-        filters: Annotated[
-            LabelTemplateFilterSet, strawberry.argument(description="Filter options")
-        ]
-        | None = None,
-        limit: Annotated[int, strawberry.argument(description="Max results")] = DEFAULT_LIMIT,
-        offset: Annotated[int, strawberry.argument(description="Skip results")] = 0,
+        limit: int = DEFAULT_LIMIT,
+        offset: int = 0,
     ) -> list[LabelTemplateType]:
         """List label templates with pagination."""
         limit = min(limit, MAX_LIMIT)
@@ -84,10 +75,8 @@ class Query:
     @strawberry.field
     def print_job_list(
         self,
-        filters: Annotated[PrintJobFilterSet, strawberry.argument(description="Filter options")]
-        | None = None,
-        limit: Annotated[int, strawberry.argument(description="Max results")] = DEFAULT_LIMIT,
-        offset: Annotated[int, strawberry.argument(description="Skip results")] = 0,
+        limit: int = DEFAULT_LIMIT,
+        offset: int = 0,
     ) -> list[PrintJobType]:
         """List print jobs with pagination."""
         limit = min(limit, MAX_LIMIT)
