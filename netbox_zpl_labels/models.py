@@ -1,5 +1,7 @@
 """Data models for NetBox ZPL Labels plugin."""
 
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -89,6 +91,7 @@ class ZPLPrinter(NetBoxModel):
         default=9100,
         verbose_name=_("port"),
         help_text=_("TCP port for ZPL communication (default: 9100)"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
     )
     dpi = models.PositiveIntegerField(
         choices=PrinterDPIChoices,
@@ -134,6 +137,18 @@ class ZPLPrinter(NetBoxModel):
 
     def __str__(self) -> str:
         return str(self.name)
+
+    def clean(self) -> None:
+        """Validate printer configuration."""
+        super().clean()
+
+        # Validate host is not empty or whitespace-only
+        if self.host and not self.host.strip():
+            raise ValidationError({"host": _("Host cannot be empty or whitespace only.")})
+
+        # Strip whitespace from host
+        if self.host:
+            self.host = self.host.strip()
 
     def get_absolute_url(self) -> str:
         return str(reverse("plugins:netbox_zpl_labels:zplprinter", args=[self.pk]))
@@ -204,6 +219,7 @@ class LabelTemplate(NetBoxModel):
         default=4,
         verbose_name=_("QR magnification"),
         help_text=_("QR code size (1-10, recommended: 4-5 for cable labels)"),
+        validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
     is_default = models.BooleanField(
         default=False,
@@ -225,6 +241,28 @@ class LabelTemplate(NetBoxModel):
 
     def get_absolute_url(self) -> str:
         return str(reverse("plugins:netbox_zpl_labels:labeltemplate", args=[self.pk]))
+
+    def clean(self) -> None:
+        """Validate template configuration."""
+        super().clean()
+
+        # Validate ZPL template structure
+        if self.zpl_template:
+            zpl = self.zpl_template.strip()
+            if not zpl.startswith("^XA"):
+                raise ValidationError(
+                    {"zpl_template": _("ZPL template must start with ^XA (format start).")}
+                )
+            if not zpl.endswith("^XZ"):
+                raise ValidationError(
+                    {"zpl_template": _("ZPL template must end with ^XZ (format end).")}
+                )
+
+        # Validate dimensions are positive
+        if self.width_mm is not None and self.width_mm <= 0:
+            raise ValidationError({"width_mm": _("Width must be greater than 0.")})
+        if self.height_mm is not None and self.height_mm <= 0:
+            raise ValidationError({"height_mm": _("Height must be greater than 0.")})
 
     def save(self, *args, **kwargs):
         """Ensure only one default template exists."""
@@ -275,6 +313,7 @@ class PrintJob(NetBoxModel):
         default=1,
         verbose_name=_("quantity"),
         help_text=_("Number of labels printed"),
+        validators=[MinValueValidator(1), MaxValueValidator(100)],
     )
     zpl_content = models.TextField(
         verbose_name=_("ZPL content"),
