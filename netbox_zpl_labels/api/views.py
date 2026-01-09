@@ -13,8 +13,8 @@ from rest_framework.views import APIView
 
 from ..filtersets import LabelTemplateFilterSet, PrintJobFilterSet, ZPLPrinterFilterSet
 from ..models import LabelTemplate, PrintJob, ZPLPrinter
-from ..zpl import generate_cable_label, get_label_preview, send_to_printer
-from ..zpl.printer import check_printer_connection
+from ..zpl import generate_cable_label, get_label_preview
+from ..zpl.printer import ZPLPrinterClient, check_printer_connection
 from .serializers import (
     GenerateLabelResponseSerializer,
     GenerateLabelSerializer,
@@ -224,9 +224,9 @@ class LabelPrintView(APIView):
         # Get base URL
         base_url = request.build_absolute_uri("/").rstrip("/")
 
-        # Print labels
+        # First pass: Generate all ZPL and collect valid cables
+        cables_data = []  # List of (cable, zpl) tuples
         jobs = []
-        printed = 0
         failed = 0
 
         for cable_id in cable_ids:
@@ -251,46 +251,72 @@ class LabelPrintView(APIView):
                 quantity=copies,
                 base_url=base_url,
             )
+            cables_data.append((cable, zpl))
 
-            # Send to printer
-            success, error = send_to_printer(
-                host=printer.host,
-                port=printer.port,
-                zpl_content=zpl,
-            )
+        # Second pass: Send all labels in a single connection (batch printing)
+        printed = 0
+        if cables_data:
+            zpl_contents = [zpl for _, zpl in cables_data]
+            client = ZPLPrinterClient(host=printer.host, port=printer.port)
 
-            # Create print job record
-            job = PrintJob.objects.create(
-                cable=cable,
-                printer=printer,
-                template=template,
-                quantity=copies,
-                zpl_content=zpl,
-                success=success,
-                error_message=error or "",
-                printed_by=request.user if request.user.is_authenticated else None,
-            )
-
-            if success:
-                printed += 1
-                jobs.append(
-                    {
-                        "cable_id": cable.pk,
-                        "status": "printed",
-                        "error": None,
-                        "job_id": job.pk,
-                    }
-                )
+            try:
+                results = client.send_zpl_batch(zpl_contents)
+            except Exception as e:
+                # Connection failed entirely - mark all as failed
+                for cable, zpl in cables_data:
+                    job = PrintJob.objects.create(
+                        cable=cable,
+                        printer=printer,
+                        template=template,
+                        quantity=copies,
+                        zpl_content=zpl,
+                        success=False,
+                        error_message=str(e),
+                        printed_by=request.user if request.user.is_authenticated else None,
+                    )
+                    failed += 1
+                    jobs.append(
+                        {
+                            "cable_id": cable.pk,
+                            "status": "failed",
+                            "error": str(e),
+                            "job_id": job.pk,
+                        }
+                    )
             else:
-                failed += 1
-                jobs.append(
-                    {
-                        "cable_id": cable.pk,
-                        "status": "failed",
-                        "error": error,
-                        "job_id": job.pk,
-                    }
-                )
+                # Create print job records and build response
+                for (cable, zpl), result in zip(cables_data, results, strict=True):
+                    job = PrintJob.objects.create(
+                        cable=cable,
+                        printer=printer,
+                        template=template,
+                        quantity=copies,
+                        zpl_content=zpl,
+                        success=result.success,
+                        error_message=result.error or "",
+                        printed_by=request.user if request.user.is_authenticated else None,
+                    )
+
+                    if result.success:
+                        printed += 1
+                        jobs.append(
+                            {
+                                "cable_id": cable.pk,
+                                "status": "printed",
+                                "error": None,
+                                "job_id": job.pk,
+                            }
+                        )
+                    else:
+                        failed += 1
+                        jobs.append(
+                            {
+                                "cable_id": cable.pk,
+                                "status": "failed",
+                                "error": result.error,
+                                "job_id": job.pk,
+                            }
+                        )
 
         response_data = {
             "status": "success" if failed == 0 else "partial" if printed > 0 else "failed",
