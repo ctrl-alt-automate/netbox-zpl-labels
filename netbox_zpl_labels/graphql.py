@@ -5,20 +5,16 @@ Provides GraphQL queries for ZPL printers, label templates, and print jobs.
 
 from __future__ import annotations
 
-try:
-    import strawberry
-
-    STRAWBERRY_AVAILABLE = True
-except ImportError:
-    STRAWBERRY_AVAILABLE = False
-    strawberry = None  # type: ignore[assignment]
-
 # Default pagination limits
 DEFAULT_LIMIT = 100
 MAX_LIMIT = 1000
 
-# Only define GraphQL types if strawberry is available
-if STRAWBERRY_AVAILABLE:
+# Initialize schema as empty - will be populated if strawberry is available
+schema: list = []
+
+try:
+    import strawberry
+
     from .models import LabelTemplate, PrintJob, ZPLPrinter
 
     @strawberry.type
@@ -165,6 +161,8 @@ if STRAWBERRY_AVAILABLE:
 
     # Export schema for NetBox plugin system
     schema = [Query]
-else:
-    # Strawberry not available - no GraphQL support
-    schema = []
+
+except Exception:
+    # If anything fails (import error, decorator error, etc.), leave schema empty
+    # This allows the plugin to still work without GraphQL support
+    pass
