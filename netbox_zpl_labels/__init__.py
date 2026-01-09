@@ -19,9 +19,8 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     author_email = "elvis@smeers.nl"
     base_url = "zpl-labels"
 
-    # NetBox version compatibility
-    min_version = "4.0.0"
-    max_version = "4.1.99"
+    # NetBox version compatibility (NetBox 4.5+ only)
+    min_version = "4.5.0"
 
     # Default plugin settings
     default_settings = {

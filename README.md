@@ -1,5 +1,9 @@
 # NetBox ZPL Labels Plugin
 
+[![CI](https://github.com/ctrl-alt-automate/netbox-zpl-labels/actions/workflows/ci.yml/badge.svg)](https://github.com/ctrl-alt-automate/netbox-zpl-labels/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![NetBox 4.5+](https://img.shields.io/badge/netbox-4.5+-green.svg)](https://github.com/netbox-community/netbox)
+
 A NetBox plugin for generating and printing ZPL (Zebra Programming Language) labels for cables documented in NetBox. The plugin targets Zebra thermal transfer printers (ZD421/ZD621 series) with self-laminating cable labels.
 
 ## Features
@@ -21,16 +25,16 @@ A NetBox plugin for generating and printing ZPL (Zebra Programming Language) lab
 
 ### Labels
 - TE Connectivity Raychem SBP self-laminating labels:
-  - SBP050100 (8.5mm × 25.4mm)
-  - SBP100143 (12.7mm × 36.5mm)
-  - SBP100225 (19.1mm × 57.2mm)
-  - SBP100375 (25.4mm × 95.3mm)
-  - SBP200375 (25.4mm × 95.3mm wide)
+  - SBP050100 (8.5mm x 25.4mm)
+  - SBP100143 (12.7mm x 36.5mm)
+  - SBP100225 (19.1mm x 57.2mm)
+  - SBP100375 (25.4mm x 95.3mm)
+  - SBP200375 (25.4mm x 95.3mm wide)
 
 ## Requirements
 
-- NetBox 4.0+
-- Python 3.10+
+- **NetBox 4.5+** (only version supported)
+- **Python 3.12+** (3.12 or 3.13)
 
 ### Optional Dependencies
 - `requests` - For label preview functionality (Labelary API)
@@ -44,7 +48,7 @@ pip install netbox-zpl-labels
 
 ### From Source
 ```bash
-git clone https://github.com/youruser/netbox-zpl-labels.git
+git clone https://github.com/ctrl-alt-automate/netbox-zpl-labels.git
 cd netbox-zpl-labels
 pip install -e .
 ```
@@ -184,11 +188,11 @@ The following variables are available in label templates:
 
 ```bash
 # Clone repository
-git clone https://github.com/youruser/netbox-zpl-labels.git
+git clone https://github.com/ctrl-alt-automate/netbox-zpl-labels.git
 cd netbox-zpl-labels
 
-# Create virtual environment
-python -m venv venv
+# Create virtual environment (Python 3.12+)
+python3.12 -m venv venv
 source venv/bin/activate
 
 # Install development dependencies
@@ -218,6 +222,13 @@ pytest --cov=netbox_zpl_labels tests/
 pytest tests/test_zpl_generator.py
 ```
 
+### CI/CD
+
+This project uses GitHub Actions for continuous integration:
+- **Lint & Type Check**: Runs ruff and mypy
+- **Unit Tests**: Tests against Python 3.12 and 3.13
+- **Integration Tests**: Tests against NetBox 4.5.0 Docker image
+
 ## License
 
 Apache License 2.0
@@ -228,5 +239,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Support
 
-- [GitHub Issues](https://github.com/youruser/netbox-zpl-labels/issues)
+- [GitHub Issues](https://github.com/ctrl-alt-automate/netbox-zpl-labels/issues)
 - [NetBox Community](https://github.com/netbox-community/netbox/discussions)
