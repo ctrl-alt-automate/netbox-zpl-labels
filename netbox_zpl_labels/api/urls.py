@@ -6,7 +6,6 @@ from netbox.api.routers import NetBoxRouter
 from . import views
 
 router = NetBoxRouter()
-router.APIRootView = views.ZPLPrinterViewSet
 
 # Register viewsets
 router.register("printers", views.ZPLPrinterViewSet)
