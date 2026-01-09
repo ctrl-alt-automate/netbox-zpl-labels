@@ -6,7 +6,7 @@ webhooks and be logged in the event log.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 # Custom event type names for webhook filtering
 EVENT_PRINT_JOB_SUCCESS = "print_job_success"
@@ -17,9 +17,6 @@ CUSTOM_EVENT_TYPES = [
     (EVENT_PRINT_JOB_SUCCESS, "Print Job Success"),
     (EVENT_PRINT_JOB_FAILURE, "Print Job Failure"),
 ]
-
-if TYPE_CHECKING:
-    from .models import PrintJob
 
 
 def get_print_job_event_type(print_job: Any) -> str:
