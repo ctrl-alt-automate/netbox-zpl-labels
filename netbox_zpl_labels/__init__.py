@@ -35,5 +35,8 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     # Required settings (none required)
     required_settings: list[str] = []
 
+    # GraphQL schema
+    graphql_schema = "netbox_zpl_labels.graphql.schema"
+
 
 config = NetBoxZPLLabelsConfig
