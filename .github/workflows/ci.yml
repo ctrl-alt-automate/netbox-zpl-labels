@@ -6,9 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-env:
-  NETBOX_VERSION: "v4.5.0-3.4.2"
-
 jobs:
   lint:
     name: Lint & Type Check
@@ -123,12 +120,31 @@ jobs:
 
       - name: Configure NetBox
         run: |
-          cd /opt/netbox/netbox
-          cp configuration_testing.py configuration.py
-
-          # Add plugin to configuration
-          cat >> configuration.py << 'EOF'
-
+          cat > /opt/netbox/netbox/netbox/configuration.py << 'EOF'
+          ALLOWED_HOSTS = ['*']
+          DATABASE = {
+              'NAME': 'netbox',
+              'USER': 'netbox',
+              'PASSWORD': 'netbox',
+              'HOST': 'localhost',
+              'PORT': '5432',
+              'CONN_MAX_AGE': 300,
+          }
+          REDIS = {
+              'tasks': {
+                  'HOST': 'localhost',
+                  'PORT': 6379,
+                  'DATABASE': 0,
+                  'SSL': False,
+              },
+              'caching': {
+                  'HOST': 'localhost',
+                  'PORT': 6379,
+                  'DATABASE': 1,
+                  'SSL': False,
+              }
+          }
+          SECRET_KEY = 'test-secret-key-for-ci-only-not-for-production'
           PLUGINS = ['netbox_zpl_labels']
           PLUGINS_CONFIG = {
               'netbox_zpl_labels': {
@@ -138,29 +154,21 @@ jobs:
           EOF
 
       - name: Run NetBox migrations
-        env:
-          DATABASE_URL: postgres://netbox:netbox@localhost:5432/netbox
         run: |
           cd /opt/netbox/netbox
           python manage.py migrate --no-input
 
       - name: Run plugin migrations
-        env:
-          DATABASE_URL: postgres://netbox:netbox@localhost:5432/netbox
         run: |
           cd /opt/netbox/netbox
           python manage.py migrate netbox_zpl_labels --no-input
 
       - name: Run Django checks
-        env:
-          DATABASE_URL: postgres://netbox:netbox@localhost:5432/netbox
         run: |
           cd /opt/netbox/netbox
           python manage.py check
 
       - name: Verify plugin loaded
-        env:
-          DATABASE_URL: postgres://netbox:netbox@localhost:5432/netbox
         run: |
           cd /opt/netbox/netbox
           python manage.py shell -c "from netbox_zpl_labels import config; print(f'Plugin loaded: {config.name} v{config.version}')"
