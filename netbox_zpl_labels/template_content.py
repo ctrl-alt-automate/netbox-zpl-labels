@@ -1,5 +1,6 @@
 """Template extensions for integrating with NetBox views."""
 
+from dcim.models import Cable
 from netbox.plugins import PluginTemplateExtension
 
 
@@ -10,17 +11,23 @@ class CablePrintButton(PluginTemplateExtension):
 
     def buttons(self):
         """Return button HTML for the cable detail page."""
-        cable = self.context["object"]
+        obj = self.context.get("object")
+        # Only show button for Cable objects
+        if not isinstance(obj, Cable):
+            return ""
         return self.render(
             "netbox_zpl_labels/inc/cable_print_button.html",
             extra_context={
-                "cable": cable,
+                "cable": obj,
             },
         )
 
     def right_page(self):
         """Add a label panel to the right side of the cable detail page."""
-        cable = self.context["object"]
+        obj = self.context.get("object")
+        # Only show panel for Cable objects
+        if not isinstance(obj, Cable):
+            return ""
 
         # Import here to avoid circular imports
         from .models import LabelTemplate, PrintJob
@@ -30,7 +37,7 @@ class CablePrintButton(PluginTemplateExtension):
 
         # Get recent print jobs for this cable
         recent_jobs = (
-            PrintJob.objects.filter(cable=cable)
+            PrintJob.objects.filter(cable=obj)
             .select_related("printer", "template")
             .order_by("-created")[:5]
         )
@@ -38,7 +45,7 @@ class CablePrintButton(PluginTemplateExtension):
         return self.render(
             "netbox_zpl_labels/inc/cable_label_panel.html",
             extra_context={
-                "cable": cable,
+                "cable": obj,
                 "default_template": default_template,
                 "recent_jobs": recent_jobs,
             },
@@ -52,6 +59,18 @@ class CableListPrintButton(PluginTemplateExtension):
 
     def list_buttons(self):
         """Add button to cable list page actions."""
+        # Check if we're on a Cable list view
+        view = self.context.get("view")
+        if view and hasattr(view, "queryset"):
+            model = getattr(view.queryset, "model", None)
+            if model is not Cable:
+                return ""
+        elif view and hasattr(view, "model"):
+            if view.model is not Cable:
+                return ""
+        else:
+            # Can't determine model, don't show button
+            return ""
         return self.render("netbox_zpl_labels/inc/cable_list_button.html")
 
 
