@@ -27,10 +27,14 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     # Default plugin settings
     default_settings = {
         "default_dpi": 300,
-        "labelary_enabled": True,
-        "labelary_dpmm": "12dpmm",
         "default_print_speed": 4,
         "socket_timeout": 5,
+        # Preview settings
+        # Options: "labelary" (online API) or "binarykits" (self-hosted Docker)
+        "preview_backend": "labelary",
+        # URL for preview backend (only used for binarykits)
+        # Example: "http://localhost:4040" for local Docker
+        "preview_url": "",
     }
 
     # Required settings (none required)
