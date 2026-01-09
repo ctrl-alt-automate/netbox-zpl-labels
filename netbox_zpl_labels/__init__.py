@@ -16,9 +16,10 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     verbose_name = _("ZPL Cable Labels")
     description = _("Generate and print ZPL labels for cables")
     version = "0.1.0"
-    author = "Elvis Smeers"
+    author = "ctrl-alt-automate"
     author_email = "elvis@smeers.nl"
     base_url = "zpl-labels"
+    url = "https://github.com/ctrl-alt-automate/netbox-zpl-labels"
 
     # NetBox version compatibility (NetBox 4.5+ only)
     min_version = "4.5.0"
