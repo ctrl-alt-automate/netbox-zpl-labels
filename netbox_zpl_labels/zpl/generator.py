@@ -1,21 +1,30 @@
-"""ZPL code generation for cable labels.
+"""ZPL code generation for labels.
 
-This module generates ZPL (Zebra Programming Language) code for cable labels
-from NetBox Cable objects. It supports various label sizes and includes
+This module generates ZPL (Zebra Programming Language) code for labels
+from NetBox objects. It supports various label sizes and includes
 QR codes linking back to NetBox.
+
+Supported object types:
+- Cable: Cable labels with termination info
+- Device: Device labels with location/rack info
+- Interface: Interface labels (future)
+- Rack: Rack labels (future)
 """
 
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from dcim.models import Cable
+    from dcim.models import Cable, Device
 
     from ..models import LabelTemplate
+
+# Supported object types for label generation
+SUPPORTED_OBJECT_TYPES = ["cable", "device"]
 
 
 @dataclass
@@ -111,6 +120,150 @@ class LabelData:
             cable_type=cable_type,
             description=cable.description or "",
             date=date.today().isoformat(),
+        )
+
+
+@dataclass
+class DeviceLabelData:
+    """Data container for device label content.
+
+    Attributes:
+        device_name: Device name
+        device_url: Full URL to device in NetBox
+        device_type: Device type/model
+        serial: Serial number
+        asset_tag: Asset tag
+        rack: Rack name
+        position: Rack position (U)
+        site: Site name
+        location: Location name
+        role: Device role
+        status: Device status
+        description: Device description
+        date: Current date
+    """
+
+    device_name: str = ""
+    device_url: str = ""
+    device_type: str = ""
+    serial: str = ""
+    asset_tag: str = ""
+    rack: str = ""
+    position: str = ""
+    site: str = ""
+    location: str = ""
+    role: str = ""
+    status: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_device(cls, device: Device, base_url: str = "") -> DeviceLabelData:
+        """Create DeviceLabelData from a NetBox Device object.
+
+        Args:
+            device: NetBox Device instance
+            base_url: Base URL for NetBox (e.g., https://netbox.local)
+
+        Returns:
+            DeviceLabelData instance populated from device
+        """
+        # Build device URL
+        device_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            device_url = f"{base_url}/dcim/devices/{device.pk}/"
+
+        # Get rack position
+        position = ""
+        if device.position is not None:
+            position = f"U{device.position}"
+
+        return cls(
+            device_name=device.name or "",
+            device_url=device_url,
+            device_type=str(device.device_type) if device.device_type else "",
+            serial=device.serial or "",
+            asset_tag=device.asset_tag or "",
+            rack=str(device.rack) if device.rack else "",
+            position=position,
+            site=str(device.site) if device.site else "",
+            location=str(device.location) if device.location else "",
+            role=str(device.role) if device.role else "",
+            status=device.get_status_display() if device.status else "",
+            description=device.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "device_name": self.device_name,
+            "device_url": self.device_url,
+            "device_type": self.device_type,
+            "serial": self.serial,
+            "asset_tag": self.asset_tag,
+            "rack": self.rack,
+            "position": self.position,
+            "site": self.site,
+            "location": self.location,
+            "role": self.role,
+            "status": self.status,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+def create_label_data(obj: Any, base_url: str = "") -> dict[str, str]:
+    """Create label data dictionary from any supported NetBox object.
+
+    Factory function that detects the object type and creates
+    appropriate label data.
+
+    Args:
+        obj: NetBox object (Cable, Device, etc.)
+        base_url: Base URL for NetBox
+
+    Returns:
+        Dictionary of label data suitable for template substitution
+
+    Raises:
+        ValueError: If object type is not supported
+    """
+    # Get the model class name
+    model_name = obj.__class__.__name__.lower()
+
+    if model_name == "cable":
+        data = LabelData.from_cable(obj, base_url)
+        return {
+            "cable_id": data.cable_id,
+            "cable_url": data.cable_url,
+            "term_a_device": data.term_a_device,
+            "term_a_interface": data.term_a_interface,
+            "term_b_device": data.term_b_device,
+            "term_b_interface": data.term_b_interface,
+            "length": data.length,
+            "color": data.color,
+            "type": data.cable_type,
+            "description": data.description,
+            "date": data.date,
+            # Common fields for cross-object templates
+            "object_id": data.cable_id,
+            "object_url": data.cable_url,
+            "object_type": "Cable",
+        }
+    elif model_name == "device":
+        data = DeviceLabelData.from_device(obj, base_url)
+        result = data.to_dict()
+        # Add common fields
+        result["object_id"] = data.device_name
+        result["object_url"] = data.device_url
+        result["object_type"] = "Device"
+        return result
+    else:
+        raise ValueError(
+            f"Unsupported object type: {model_name}. "
+            f"Supported types: {', '.join(SUPPORTED_OBJECT_TYPES)}"
         )
 
 
