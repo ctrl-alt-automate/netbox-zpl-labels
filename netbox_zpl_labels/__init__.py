@@ -41,11 +41,13 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     def ready(self):
         """Called when the plugin is loaded.
 
-        Imports signal handlers to register them with Django.
+        Registers signal handlers with Django.
         """
         super().ready()
-        # Import events module to register signal handlers
-        from . import events  # noqa: F401
+        # Register signal handlers for events
+        from .events import _register_signals
+
+        _register_signals()
 
 
 config = NetBoxZPLLabelsConfig
