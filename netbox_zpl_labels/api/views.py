@@ -105,9 +105,7 @@ class ZPLPrinterViewSet(NetBoxModelViewSet):
                 "connection_error": None,
                 "paper": printer_status.get("paper") if printer_status else None,
                 "ribbon": printer_status.get("ribbon") if printer_status else None,
-                "raw_status": (
-                    printer_status.get("raw_response") if printer_status else None
-                ),
+                "raw_status": (printer_status.get("raw_response") if printer_status else None),
                 "last_checked": printer.last_checked.isoformat(),
             },
             status=status.HTTP_200_OK,
