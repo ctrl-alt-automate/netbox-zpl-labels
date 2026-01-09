@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
 from netbox.views import generic
-from utilities.views import GetReturnURLMixin, ViewTab, register_model_view
+from utilities.views import GetReturnURLMixin
 
 from .filtersets import LabelTemplateFilterSet, PrintJobFilterSet, ZPLPrinterFilterSet
 from .forms import (
@@ -315,17 +315,11 @@ class PrintJobBulkDeleteView(generic.BulkDeleteView):
 #
 
 
-@register_model_view(Cable, name="print_label", path="print-label")
 class CablePrintLabelView(generic.ObjectView):
     """View for printing a label for a specific cable."""
 
     queryset = Cable.objects.all()
     template_name = "netbox_zpl_labels/cable_print_label.html"
-    tab = ViewTab(
-        label=_("Print Label"),
-        permission="netbox_zpl_labels.add_printjob",
-        weight=500,
-    )
 
     def get_extra_context(self, request, instance):
         """Provide form and available printers/templates."""

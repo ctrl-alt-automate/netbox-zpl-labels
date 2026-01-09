@@ -12,7 +12,7 @@
         {% endif %}
 
         <div class="d-grid gap-2">
-            <a href="{% url 'dcim:cable_print_label' pk=cable.pk %}"
+            <a href="{% url 'plugins:netbox_zpl_labels:cable_print_label' pk=cable.pk %}"
                class="btn btn-primary btn-sm">
                 <i class="mdi mdi-printer"></i> Print Label
             </a>

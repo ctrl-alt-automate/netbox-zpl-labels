@@ -156,6 +156,11 @@ urlpatterns = [
     ),
     # Cable Label URLs
     path(
+        "cables/<int:pk>/print/",
+        views.CablePrintLabelView.as_view(),
+        name="cable_print_label",
+    ),
+    path(
         "cables/<int:pk>/preview/",
         views.CableLabelPreviewView.as_view(),
         name="cable_label_preview",
