@@ -11,7 +11,7 @@
                 <i class="mdi mdi-printer"></i> {% trans "Print Label" %}
             </h5>
             <div class="card-body">
-                <form method="post" action="{% url 'plugins:netbox_zpl_labels:cable_print_label' pk=object.pk %}">
+                <form method="post" action="{% url 'dcim:cable_print_label' pk=object.pk %}">
                     {% csrf_token %}
 
                     <div class="mb-3">
