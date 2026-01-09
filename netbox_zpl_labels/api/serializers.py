@@ -1,10 +1,20 @@
 """API serializers for NetBox ZPL Labels plugin."""
 
-from dcim.api.serializers import NestedCableSerializer
+from dcim.models import Cable
 from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
 from rest_framework import serializers
 
 from ..models import LabelTemplate, PrintJob, ZPLPrinter
+
+
+class NestedCableSerializer(WritableNestedSerializer):
+    """Nested serializer for Cable (simplified for plugin use)."""
+
+    url = serializers.HyperlinkedIdentityField(view_name="dcim-api:cable-detail")
+
+    class Meta:
+        model = Cable
+        fields = ["id", "url", "display", "label"]
 
 #
 # Nested Serializers
