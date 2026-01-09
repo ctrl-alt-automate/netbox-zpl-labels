@@ -1,0 +1,162 @@
+"""URL routing for NetBox ZPL Labels plugin."""
+from django.urls import path
+from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
+
+from . import models, views
+
+urlpatterns = [
+    # ZPLPrinter URLs
+    path(
+        "printers/",
+        views.ZPLPrinterListView.as_view(),
+        name="zplprinter_list",
+    ),
+    path(
+        "printers/add/",
+        views.ZPLPrinterEditView.as_view(),
+        name="zplprinter_add",
+    ),
+    path(
+        "printers/import/",
+        views.ZPLPrinterBulkImportView.as_view(),
+        name="zplprinter_import",
+    ),
+    path(
+        "printers/edit/",
+        views.ZPLPrinterBulkEditView.as_view(),
+        name="zplprinter_bulk_edit",
+    ),
+    path(
+        "printers/delete/",
+        views.ZPLPrinterBulkDeleteView.as_view(),
+        name="zplprinter_bulk_delete",
+    ),
+    path(
+        "printers/<int:pk>/",
+        views.ZPLPrinterView.as_view(),
+        name="zplprinter",
+    ),
+    path(
+        "printers/<int:pk>/edit/",
+        views.ZPLPrinterEditView.as_view(),
+        name="zplprinter_edit",
+    ),
+    path(
+        "printers/<int:pk>/delete/",
+        views.ZPLPrinterDeleteView.as_view(),
+        name="zplprinter_delete",
+    ),
+    path(
+        "printers/<int:pk>/test/",
+        views.ZPLPrinterTestConnectionView.as_view(),
+        name="zplprinter_test",
+    ),
+    path(
+        "printers/<int:pk>/changelog/",
+        ObjectChangeLogView.as_view(),
+        name="zplprinter_changelog",
+        kwargs={"model": models.ZPLPrinter},
+    ),
+    path(
+        "printers/<int:pk>/journal/",
+        ObjectJournalView.as_view(),
+        name="zplprinter_journal",
+        kwargs={"model": models.ZPLPrinter},
+    ),
+    # LabelTemplate URLs
+    path(
+        "templates/",
+        views.LabelTemplateListView.as_view(),
+        name="labeltemplate_list",
+    ),
+    path(
+        "templates/add/",
+        views.LabelTemplateEditView.as_view(),
+        name="labeltemplate_add",
+    ),
+    path(
+        "templates/edit/",
+        views.LabelTemplateBulkEditView.as_view(),
+        name="labeltemplate_bulk_edit",
+    ),
+    path(
+        "templates/delete/",
+        views.LabelTemplateBulkDeleteView.as_view(),
+        name="labeltemplate_bulk_delete",
+    ),
+    path(
+        "templates/<int:pk>/",
+        views.LabelTemplateView.as_view(),
+        name="labeltemplate",
+    ),
+    path(
+        "templates/<int:pk>/edit/",
+        views.LabelTemplateEditView.as_view(),
+        name="labeltemplate_edit",
+    ),
+    path(
+        "templates/<int:pk>/delete/",
+        views.LabelTemplateDeleteView.as_view(),
+        name="labeltemplate_delete",
+    ),
+    path(
+        "templates/<int:pk>/preview/",
+        views.LabelTemplatePreviewView.as_view(),
+        name="labeltemplate_preview",
+    ),
+    path(
+        "templates/<int:pk>/changelog/",
+        ObjectChangeLogView.as_view(),
+        name="labeltemplate_changelog",
+        kwargs={"model": models.LabelTemplate},
+    ),
+    path(
+        "templates/<int:pk>/journal/",
+        ObjectJournalView.as_view(),
+        name="labeltemplate_journal",
+        kwargs={"model": models.LabelTemplate},
+    ),
+    # PrintJob URLs
+    path(
+        "jobs/",
+        views.PrintJobListView.as_view(),
+        name="printjob_list",
+    ),
+    path(
+        "jobs/delete/",
+        views.PrintJobBulkDeleteView.as_view(),
+        name="printjob_bulk_delete",
+    ),
+    path(
+        "jobs/<int:pk>/",
+        views.PrintJobView.as_view(),
+        name="printjob",
+    ),
+    path(
+        "jobs/<int:pk>/delete/",
+        views.PrintJobDeleteView.as_view(),
+        name="printjob_delete",
+    ),
+    path(
+        "jobs/<int:pk>/changelog/",
+        ObjectChangeLogView.as_view(),
+        name="printjob_changelog",
+        kwargs={"model": models.PrintJob},
+    ),
+    # Cable Label URLs
+    path(
+        "cables/<int:pk>/preview/",
+        views.CableLabelPreviewView.as_view(),
+        name="cable_label_preview",
+    ),
+    path(
+        "cables/<int:pk>/download/",
+        views.CableLabelDownloadView.as_view(),
+        name="cable_label_download",
+    ),
+    path(
+        "cables/bulk-print/",
+        views.CableBulkPrintLabelsView.as_view(),
+        name="cable_bulk_print",
+    ),
+]

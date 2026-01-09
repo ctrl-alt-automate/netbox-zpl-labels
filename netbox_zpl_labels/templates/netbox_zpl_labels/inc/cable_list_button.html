@@ -1,0 +1,22 @@
+<button type="button" class="btn btn-sm btn-primary"
+        onclick="bulkPrintLabels()">
+    <i class="mdi mdi-printer"></i> Print Labels
+</button>
+
+<script>
+function bulkPrintLabels() {
+    // Get selected cable PKs
+    const checkboxes = document.querySelectorAll('input[name="pk"]:checked');
+    if (checkboxes.length === 0) {
+        alert('Please select at least one cable.');
+        return;
+    }
+
+    // Build URL with PKs
+    const pks = Array.from(checkboxes).map(cb => cb.value);
+    const url = '{% url "plugins:netbox_zpl_labels:cable_bulk_print" %}?' +
+                pks.map(pk => 'pk=' + pk).join('&');
+
+    window.location.href = url;
+}
+</script>

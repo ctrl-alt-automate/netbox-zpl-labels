@@ -1,0 +1,123 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load plugins %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li class="breadcrumb-item">
+    <a href="{% url 'plugins:netbox_zpl_labels:labeltemplate_list' %}">{% trans "Label Templates" %}</a>
+</li>
+<li class="breadcrumb-item">{{ object }}</li>
+{% endblock %}
+
+{% block extra_controls %}
+<a href="{% url 'plugins:netbox_zpl_labels:labeltemplate_preview' pk=object.pk %}"
+   class="btn btn-sm btn-outline-primary" target="_blank">
+    <i class="mdi mdi-eye"></i> {% trans "Preview" %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-5">
+        <div class="card">
+            <h5 class="card-header">{% trans "Template Details" %}</h5>
+            <table class="table table-hover attr-table">
+                <tr>
+                    <th scope="row">{% trans "Name" %}</th>
+                    <td>{{ object.name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Label Size" %}</th>
+                    <td>{{ object.get_label_size_display }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Dimensions" %}</th>
+                    <td>{{ object.width_mm }}mm &times; {{ object.height_mm }}mm</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Resolution" %}</th>
+                    <td>{{ object.get_dpi_display }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Include QR Code" %}</th>
+                    <td>{% checkmark object.include_qr_code %}</td>
+                </tr>
+                {% if object.include_qr_code %}
+                <tr>
+                    <th scope="row">{% trans "QR Magnification" %}</th>
+                    <td>{{ object.qr_magnification }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <th scope="row">{% trans "Default Template" %}</th>
+                    <td>{% checkmark object.is_default %}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Description" %}</th>
+                    <td>{{ object.description|placeholder }}</td>
+                </tr>
+            </table>
+        </div>
+
+        {% include 'inc/panels/tags.html' %}
+        {% include 'inc/panels/comments.html' %}
+
+        <div class="card">
+            <h5 class="card-header">{% trans "Available Variables" %}</h5>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Variable" %}</th>
+                            <th>{% trans "Description" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>{cable_id}</code></td><td>{% trans "Cable label/identifier" %}</td></tr>
+                        <tr><td><code>{cable_url}</code></td><td>{% trans "URL to cable in NetBox" %}</td></tr>
+                        <tr><td><code>{term_a_device}</code></td><td>{% trans "Device name (A-side)" %}</td></tr>
+                        <tr><td><code>{term_a_interface}</code></td><td>{% trans "Interface name (A-side)" %}</td></tr>
+                        <tr><td><code>{term_b_device}</code></td><td>{% trans "Device name (B-side)" %}</td></tr>
+                        <tr><td><code>{term_b_interface}</code></td><td>{% trans "Interface name (B-side)" %}</td></tr>
+                        <tr><td><code>{length}</code></td><td>{% trans "Cable length with unit" %}</td></tr>
+                        <tr><td><code>{color}</code></td><td>{% trans "Cable color" %}</td></tr>
+                        <tr><td><code>{type}</code></td><td>{% trans "Cable type" %}</td></tr>
+                        <tr><td><code>{description}</code></td><td>{% trans "Cable description" %}</td></tr>
+                        <tr><td><code>{date}</code></td><td>{% trans "Current date (ISO format)" %}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col col-md-7">
+        <div class="card">
+            <h5 class="card-header">{% trans "ZPL Template Code" %}</h5>
+            <div class="card-body">
+                <pre class="mb-0" style="max-height: 500px; overflow-y: auto;"><code>{{ zpl_code }}</code></pre>
+            </div>
+        </div>
+
+        <div class="card">
+            <h5 class="card-header">{% trans "Label Preview" %}</h5>
+            <div class="card-body text-center">
+                <img id="template-preview"
+                     src="{% url 'plugins:netbox_zpl_labels:labeltemplate_preview' pk=object.pk %}"
+                     alt="Label Preview"
+                     class="img-fluid border"
+                     style="max-width: 300px;"
+                     onerror="this.style.display='none'; document.getElementById('preview-error').style.display='block';">
+                <div id="preview-error" style="display: none;" class="text-muted">
+                    <i class="mdi mdi-image-off"></i>
+                    <p>{% trans "Preview not available. The Labelary API may be unreachable." %}</p>
+                </div>
+            </div>
+            <div class="card-footer text-muted small">
+                {% trans "Preview generated using Labelary API with sample data." %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

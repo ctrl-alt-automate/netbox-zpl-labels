@@ -1,0 +1,103 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load plugins %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li class="breadcrumb-item">
+    <a href="{% url 'plugins:netbox_zpl_labels:printjob_list' %}">{% trans "Print Jobs" %}</a>
+</li>
+<li class="breadcrumb-item">{% trans "Job" %} #{{ object.pk }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "Print Job Details" %}</h5>
+            <table class="table table-hover attr-table">
+                <tr>
+                    <th scope="row">{% trans "Status" %}</th>
+                    <td>
+                        {% if object.success %}
+                        <span class="badge bg-success">{% trans "Success" %}</span>
+                        {% else %}
+                        <span class="badge bg-danger">{% trans "Failed" %}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Cable" %}</th>
+                    <td>
+                        <a href="{{ object.cable.get_absolute_url }}">{{ object.cable }}</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Printer" %}</th>
+                    <td>
+                        {% if object.printer %}
+                        <a href="{{ object.printer.get_absolute_url }}">{{ object.printer }}</a>
+                        {% else %}
+                        {{ ''|placeholder }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Template" %}</th>
+                    <td>
+                        {% if object.template %}
+                        <a href="{{ object.template.get_absolute_url }}">{{ object.template }}</a>
+                        {% else %}
+                        {{ ''|placeholder }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Quantity" %}</th>
+                    <td>{{ object.quantity }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Printed By" %}</th>
+                    <td>
+                        {% if object.printed_by %}
+                        {{ object.printed_by }}
+                        {% else %}
+                        {{ ''|placeholder }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Printed At" %}</th>
+                    <td>{{ object.created }}</td>
+                </tr>
+                {% if not object.success and object.error_message %}
+                <tr>
+                    <th scope="row">{% trans "Error Message" %}</th>
+                    <td class="text-danger">{{ object.error_message }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        {% include 'inc/panels/comments.html' %}
+    </div>
+
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "ZPL Content" %}</h5>
+            <div class="card-body">
+                <pre class="mb-0" style="max-height: 400px; overflow-y: auto;"><code>{{ object.zpl_content }}</code></pre>
+            </div>
+            <div class="card-footer">
+                <form method="post" action="{% url 'plugins:netbox_zpl_labels:cable_label_download' pk=object.cable.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="mdi mdi-download"></i> {% trans "Download ZPL" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

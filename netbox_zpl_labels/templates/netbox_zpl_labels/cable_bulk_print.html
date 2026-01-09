@@ -1,0 +1,116 @@
+{% extends 'generic/bulk_edit.html' %}
+{% load helpers %}
+{% load form_helpers %}
+{% load i18n %}
+
+{% block title %}{% trans "Bulk Print Labels" %}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-8">
+        <div class="card">
+            <h5 class="card-header">
+                <i class="mdi mdi-printer"></i> {% trans "Bulk Print Labels" %}
+            </h5>
+            <div class="card-body">
+                <p>
+                    {% blocktrans count counter=cables|length %}
+                    You are about to print labels for <strong>1 cable</strong>.
+                    {% plural %}
+                    You are about to print labels for <strong>{{ counter }} cables</strong>.
+                    {% endblocktrans %}
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% for pk in form.pk.value %}
+                    <input type="hidden" name="pk" value="{{ pk }}">
+                    {% endfor %}
+
+                    <div class="mb-3">
+                        <label for="id_printer" class="form-label">{% trans "Printer" %}</label>
+                        {{ form.printer }}
+                        {% if form.printer.errors %}
+                        <div class="text-danger">{{ form.printer.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_template" class="form-label">{% trans "Label Template" %}</label>
+                        {{ form.template }}
+                        {% if form.template.errors %}
+                        <div class="text-danger">{{ form.template.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_quantity_per_cable" class="form-label">{% trans "Labels per Cable" %}</label>
+                        {{ form.quantity_per_cable }}
+                        {% if form.quantity_per_cable.help_text %}
+                        <div class="form-text">{{ form.quantity_per_cable.help_text }}</div>
+                        {% endif %}
+                        {% if form.quantity_per_cable.errors %}
+                        <div class="text-danger">{{ form.quantity_per_cable.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="mdi mdi-printer"></i> {% trans "Print All Labels" %}
+                        </button>
+                        <a href="{{ return_url }}" class="btn btn-outline-secondary">
+                            {% trans "Cancel" %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col col-md-4">
+        <div class="card">
+            <h5 class="card-header">{% trans "Selected Cables" %}</h5>
+            <ul class="list-group list-group-flush" style="max-height: 400px; overflow-y: auto;">
+                {% for cable in cables %}
+                <li class="list-group-item">
+                    <a href="{{ cable.get_absolute_url }}">
+                        {{ cable.label|default:cable.pk }}
+                    </a>
+                    <span class="text-muted small">
+                        {% if cable.a_terminations %}
+                        {{ cable.a_terminations.0 }}
+                        {% endif %}
+                        &rarr;
+                        {% if cable.b_terminations %}
+                        {{ cable.b_terminations.0 }}
+                        {% endif %}
+                    </span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        {% if printers %}
+        <div class="card">
+            <h5 class="card-header">{% trans "Printer Status" %}</h5>
+            <table class="table table-sm">
+                <tbody>
+                    {% for printer in printers %}
+                    <tr>
+                        <td>{{ printer.name }}</td>
+                        <td>{% badge printer.get_status_display bg_color=printer.get_status_color %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">
+            <i class="mdi mdi-alert"></i>
+            {% trans "No active printers available." %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

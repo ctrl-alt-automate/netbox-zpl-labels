@@ -1,0 +1,127 @@
+{% extends 'generic/object.html' %}
+{% load helpers %}
+{% load plugins %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+{{ block.super }}
+<li class="breadcrumb-item">
+    <a href="{% url 'plugins:netbox_zpl_labels:zplprinter_list' %}">{% trans "Printers" %}</a>
+</li>
+<li class="breadcrumb-item">{{ object }}</li>
+{% endblock %}
+
+{% block extra_controls %}
+<a href="{% url 'plugins:netbox_zpl_labels:zplprinter_test' pk=object.pk %}"
+   class="btn btn-sm btn-outline-primary">
+    <i class="mdi mdi-lan-connect"></i> {% trans "Test Connection" %}
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "Printer Details" %}</h5>
+            <table class="table table-hover attr-table">
+                <tr>
+                    <th scope="row">{% trans "Name" %}</th>
+                    <td>{{ object.name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Host" %}</th>
+                    <td><code>{{ object.host }}</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Port" %}</th>
+                    <td><code>{{ object.port }}</code></td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Resolution" %}</th>
+                    <td>{{ object.get_dpi_display }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Status" %}</th>
+                    <td>{% badge object.get_status_display bg_color=object.get_status_color %}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Location" %}</th>
+                    <td>
+                        {% if object.location %}
+                        <a href="{{ object.location.get_absolute_url }}">{{ object.location }}</a>
+                        {% else %}
+                        {{ ''|placeholder }}
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Description" %}</th>
+                    <td>{{ object.description|placeholder }}</td>
+                </tr>
+            </table>
+        </div>
+
+        {% include 'inc/panels/tags.html' %}
+        {% include 'inc/panels/comments.html' %}
+    </div>
+
+    <div class="col col-md-6">
+        <div class="card">
+            <h5 class="card-header">{% trans "Connection Info" %}</h5>
+            <div class="card-body">
+                <p class="mb-2">
+                    <strong>{% trans "Endpoint:" %}</strong>
+                    <code>{{ object.host }}:{{ object.port }}</code>
+                </p>
+                <p class="mb-2">
+                    <strong>{% trans "Protocol:" %}</strong> ZPL II over TCP/IP
+                </p>
+                <p class="text-muted small">
+                    {% trans "This printer receives ZPL commands directly via TCP port 9100. No driver installation required." %}
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h5 class="card-header">{% trans "Recent Print Jobs" %}</h5>
+            {% if recent_jobs %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{% trans "Cable" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Date" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in recent_jobs %}
+                    <tr>
+                        <td>
+                            <a href="{{ job.cable.get_absolute_url }}">{{ job.cable }}</a>
+                        </td>
+                        <td>
+                            {% if job.success %}
+                            <span class="badge bg-success">{% trans "OK" %}</span>
+                            {% else %}
+                            <span class="badge bg-danger">{% trans "Failed" %}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ job.created|date:"SHORT_DATETIME_FORMAT" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="card-body text-muted">
+                {% trans "No print jobs recorded for this printer." %}
+            </div>
+            {% endif %}
+            <div class="card-footer text-end">
+                <a href="{% url 'plugins:netbox_zpl_labels:printjob_list' %}?printer_id={{ object.pk }}">
+                    {% trans "View all print history" %} &raquo;
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
