@@ -5,14 +5,11 @@ Provides GraphQL queries for ZPL printers, label templates, and print jobs.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 import strawberry
 
 from .models import LabelTemplate, PrintJob, ZPLPrinter
-
-if TYPE_CHECKING:
-    pass
 
 # Default pagination limits
 DEFAULT_LIMIT = 100
@@ -20,6 +17,7 @@ MAX_LIMIT = 1000
 
 
 @strawberry.type
+@dataclass
 class ZPLPrinterType:
     """GraphQL type for ZPLPrinter."""
 
@@ -32,6 +30,7 @@ class ZPLPrinterType:
 
 
 @strawberry.type
+@dataclass
 class LabelTemplateType:
     """GraphQL type for LabelTemplate."""
 
@@ -45,6 +44,7 @@ class LabelTemplateType:
 
 
 @strawberry.type
+@dataclass
 class PrintJobType:
     """GraphQL type for PrintJob."""
 
