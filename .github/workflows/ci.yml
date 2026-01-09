@@ -144,7 +144,7 @@ jobs:
                   'SSL': False,
               }
           }
-          SECRET_KEY = 'test-secret-key-for-ci-only-not-for-production'
+          SECRET_KEY = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)ABCDEFGHIJKLMNOPQRSTUVWXYZ'
           PLUGINS = ['netbox_zpl_labels']
           PLUGINS_CONFIG = {
               'netbox_zpl_labels': {
