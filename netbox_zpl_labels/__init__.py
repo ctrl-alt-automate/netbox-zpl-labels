@@ -38,5 +38,14 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     # GraphQL schema
     graphql_schema = "netbox_zpl_labels.graphql.schema"
 
+    def ready(self):
+        """Called when the plugin is loaded.
+
+        Imports signal handlers to register them with Django.
+        """
+        super().ready()
+        # Import events module to register signal handlers
+        from . import events  # noqa: F401
+
 
 config = NetBoxZPLLabelsConfig
