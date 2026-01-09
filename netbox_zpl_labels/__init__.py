@@ -36,7 +36,7 @@ class NetBoxZPLLabelsConfig(PluginConfig):
     required_settings: list[str] = []
 
     # GraphQL schema
-    graphql_schema = "netbox_zpl_labels.graphql.schema"
+    graphql_schema = "graphql.schema"
 
     def ready(self):
         """Called when the plugin is loaded.
