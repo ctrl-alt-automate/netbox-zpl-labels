@@ -323,12 +323,12 @@ def get_label_preview(
         width_inches = LabelaryPreview.mm_to_inches(width_mm)
         height_inches = LabelaryPreview.mm_to_inches(height_mm)
 
-        client = LabelaryPreview(
+        labelary_client = LabelaryPreview(
             dpi=dpi,
             label_width_inches=width_inches,
             label_height_inches=height_inches,
         )
-        return client.generate_preview(zpl)
+        return labelary_client.generate_preview(zpl)
 
 
 def get_labelary_url(
