@@ -3,6 +3,7 @@
 This module provides preview image generation for ZPL labels
 using the free Labelary API (http://labelary.com).
 """
+
 from __future__ import annotations
 
 import logging
@@ -87,9 +88,7 @@ class LabelaryPreview:
             Labelary API URL
         """
         dimensions = f"{self.label_width}x{self.label_height}"
-        return (
-            f"{self.BASE_URL}/{self.dpmm}/labels/{dimensions}/{label_index}/"
-        )
+        return f"{self.BASE_URL}/{self.dpmm}/labels/{dimensions}/{label_index}/"
 
     def generate_preview(self, zpl: str, label_index: int = 0) -> PreviewResult:
         """Generate a preview image for ZPL code.

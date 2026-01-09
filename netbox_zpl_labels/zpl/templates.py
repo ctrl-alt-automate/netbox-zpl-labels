@@ -3,6 +3,7 @@
 This module provides default ZPL templates for various
 TE Connectivity Raychem SBP label sizes.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

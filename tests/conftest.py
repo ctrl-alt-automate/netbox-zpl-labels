@@ -3,6 +3,7 @@
 This conftest.py mocks NetBox dependencies so that the ZPL module tests
 can run without a full NetBox installation.
 """
+
 import sys
 from unittest.mock import MagicMock
 

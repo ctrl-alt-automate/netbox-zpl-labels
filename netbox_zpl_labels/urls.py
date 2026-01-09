@@ -1,4 +1,5 @@
 """URL routing for NetBox ZPL Labels plugin."""
+
 from django.urls import path
 from netbox.views.generic import ObjectChangeLogView, ObjectJournalView
 

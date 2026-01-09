@@ -1,5 +1,5 @@
 """Tests for printer communication module."""
-import socket
+
 from unittest.mock import MagicMock, patch
 
 from netbox_zpl_labels.zpl.printer import (
@@ -66,7 +66,7 @@ class TestZPLPrinterClient:
     def test_test_connection_timeout(self, mock_socket_class):
         """Test connection timeout."""
         mock_socket = MagicMock()
-        mock_socket.connect.side_effect = socket.timeout()
+        mock_socket.connect.side_effect = TimeoutError()
         mock_socket_class.return_value.__enter__ = MagicMock(return_value=mock_socket)
         mock_socket_class.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -137,11 +137,13 @@ class TestZPLPrinterClient:
         mock_socket_class.return_value.__exit__ = MagicMock(return_value=False)
 
         client = ZPLPrinterClient(host="192.168.1.100")
-        results = client.send_zpl_batch([
-            "^XA^FDLABEL1^FS^XZ",
-            "^XA^FDLABEL2^FS^XZ",
-            "^XA^FDLABEL3^FS^XZ",
-        ])
+        results = client.send_zpl_batch(
+            [
+                "^XA^FDLABEL1^FS^XZ",
+                "^XA^FDLABEL2^FS^XZ",
+                "^XA^FDLABEL3^FS^XZ",
+            ]
+        )
 
         assert len(results) == 3
         assert all(r.success for r in results)

@@ -4,6 +4,7 @@ A NetBox plugin for generating and printing ZPL labels for cables
 documented in NetBox. Targets Zebra thermal transfer printers
 (ZD421/ZD621 series) with self-laminating cable labels.
 """
+
 from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginConfig
 

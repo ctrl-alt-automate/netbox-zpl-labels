@@ -1,4 +1,5 @@
 """Search indexes for NetBox ZPL Labels plugin."""
+
 from netbox.search import SearchIndex, register_search
 
 from .models import LabelTemplate, ZPLPrinter

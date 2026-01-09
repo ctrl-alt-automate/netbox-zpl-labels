@@ -1,4 +1,5 @@
 """API serializers for NetBox ZPL Labels plugin."""
+
 from dcim.api.serializers import NestedCableSerializer
 from netbox.api.serializers import NetBoxModelSerializer, WritableNestedSerializer
 from rest_framework import serializers

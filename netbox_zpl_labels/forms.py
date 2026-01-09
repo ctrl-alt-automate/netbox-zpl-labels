@@ -1,4 +1,5 @@
 """Forms for NetBox ZPL Labels plugin."""
+
 from dcim.models import Location
 from django import forms
 from django.utils.translation import gettext_lazy as _
@@ -150,9 +151,7 @@ class LabelTemplateForm(NetBoxModelForm):
     fieldsets = (
         FieldSet("name", "description", "is_default", name=_("Template")),
         FieldSet("label_size", "width_mm", "height_mm", "dpi", name=_("Dimensions")),
-        FieldSet(
-            "include_qr_code", "qr_magnification", "zpl_template", name=_("Content")
-        ),
+        FieldSet("include_qr_code", "qr_magnification", "zpl_template", name=_("Content")),
         FieldSet("tags", name=_("Tags")),
     )
 

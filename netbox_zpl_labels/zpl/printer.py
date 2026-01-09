@@ -3,6 +3,7 @@
 This module handles direct socket communication with Zebra thermal
 printers via TCP port 9100.
 """
+
 from __future__ import annotations
 
 import logging
@@ -72,7 +73,7 @@ class ZPLPrinterClient:
                 sock.settimeout(self.timeout)
                 sock.connect((self.host, self.port))
                 return PrintResult(success=True)
-        except socket.timeout:
+        except TimeoutError:
             return PrintResult(
                 success=False,
                 error=f"Connection timeout after {self.timeout}s",
@@ -118,7 +119,7 @@ class ZPLPrinterClient:
 
                 return PrintResult(success=True, bytes_sent=bytes_sent)
 
-        except socket.timeout:
+        except TimeoutError:
             error = f"Connection timeout after {self.timeout}s"
             logger.error("Printer %s:%d - %s", self.host, self.port, error)
             return PrintResult(success=False, error=error)
@@ -158,7 +159,7 @@ class ZPLPrinterClient:
                     except (OSError, UnicodeEncodeError) as e:
                         results.append(PrintResult(success=False, error=str(e)))
 
-        except socket.timeout:
+        except TimeoutError:
             error = f"Connection timeout after {self.timeout}s"
             # Mark remaining jobs as failed
             for _ in range(len(zpl_contents) - len(results)):
@@ -194,7 +195,7 @@ class ZPLPrinterClient:
                 if response:
                     return self._parse_status_response(response.decode("utf-8"))
 
-        except (OSError, socket.timeout) as e:
+        except OSError as e:
             logger.debug("Status query failed: %s", e)
 
         return None

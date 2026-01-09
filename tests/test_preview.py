@@ -1,4 +1,5 @@
 """Tests for label preview module."""
+
 from unittest.mock import MagicMock, patch
 
 from netbox_zpl_labels.zpl.preview import (

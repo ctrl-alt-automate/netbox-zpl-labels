@@ -1,4 +1,5 @@
 """Filtersets for NetBox ZPL Labels plugin."""
+
 import django_filters
 from dcim.models import Location
 from django.db.models import Q
@@ -45,9 +46,7 @@ class ZPLPrinterFilterSet(NetBoxModelFilterSet):
         if not value.strip():
             return queryset
         return queryset.filter(
-            Q(name__icontains=value)
-            | Q(host__icontains=value)
-            | Q(description__icontains=value)
+            Q(name__icontains=value) | Q(host__icontains=value) | Q(description__icontains=value)
         )
 
 
@@ -77,9 +76,7 @@ class LabelTemplateFilterSet(NetBoxModelFilterSet):
         """Search by name or description."""
         if not value.strip():
             return queryset
-        return queryset.filter(
-            Q(name__icontains=value) | Q(description__icontains=value)
-        )
+        return queryset.filter(Q(name__icontains=value) | Q(description__icontains=value))
 
 
 class PrintJobFilterSet(NetBoxModelFilterSet):
@@ -121,6 +118,4 @@ class PrintJobFilterSet(NetBoxModelFilterSet):
         """Search by cable label or error message."""
         if not value.strip():
             return queryset
-        return queryset.filter(
-            Q(cable__label__icontains=value) | Q(error_message__icontains=value)
-        )
+        return queryset.filter(Q(cable__label__icontains=value) | Q(error_message__icontains=value))

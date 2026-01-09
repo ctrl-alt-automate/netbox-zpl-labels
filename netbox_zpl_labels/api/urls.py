@@ -1,4 +1,5 @@
 """API URL routing for NetBox ZPL Labels plugin."""
+
 from django.urls import path
 from netbox.api.routers import NetBoxRouter
 

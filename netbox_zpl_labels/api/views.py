@@ -1,4 +1,5 @@
 """API views for NetBox ZPL Labels plugin."""
+
 from dcim.models import Cable
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -117,9 +118,7 @@ class LabelTemplateViewSet(NetBoxModelViewSet):
 class PrintJobViewSet(NetBoxModelViewSet):
     """API viewset for print jobs."""
 
-    queryset = PrintJob.objects.select_related(
-        "cable", "printer", "template", "printed_by"
-    )
+    queryset = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")
     serializer_class = PrintJobSerializer
     filterset_class = PrintJobFilterSet
 

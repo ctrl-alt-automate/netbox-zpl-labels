@@ -1,4 +1,5 @@
 """Views for NetBox ZPL Labels plugin."""
+
 from dcim.models import Cable
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
@@ -236,9 +237,7 @@ class LabelTemplatePreviewView(View):
 class PrintJobListView(generic.ObjectListView):
     """List view for print job history."""
 
-    queryset = PrintJob.objects.select_related(
-        "cable", "printer", "template", "printed_by"
-    )
+    queryset = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")
     table = PrintJobTable
     filterset = PrintJobFilterSet
     filterset_form = PrintJobFilterForm
@@ -250,9 +249,7 @@ class PrintJobListView(generic.ObjectListView):
 class PrintJobView(generic.ObjectView):
     """Detail view for a print job."""
 
-    queryset = PrintJob.objects.select_related(
-        "cable", "printer", "template", "printed_by"
-    )
+    queryset = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")
 
 
 class PrintJobDeleteView(generic.ObjectDeleteView):
@@ -340,9 +337,7 @@ class CablePrintLabelView(generic.ObjectView):
             if success:
                 messages.success(
                     request,
-                    _("Label printed successfully to {printer}").format(
-                        printer=printer.name
-                    ),
+                    _("Label printed successfully to {printer}").format(printer=printer.name),
                 )
             else:
                 messages.error(
@@ -523,9 +518,7 @@ class CableBulkPrintLabelsView(GetReturnURLMixin, View):
             if success_count:
                 messages.success(
                     request,
-                    _("Printed {count} labels successfully.").format(
-                        count=success_count
-                    ),
+                    _("Printed {count} labels successfully.").format(count=success_count),
                 )
             if error_count:
                 messages.error(

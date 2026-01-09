@@ -1,4 +1,5 @@
 """Tests for ZPL generator module."""
+
 from unittest.mock import MagicMock
 
 from netbox_zpl_labels.zpl.generator import (

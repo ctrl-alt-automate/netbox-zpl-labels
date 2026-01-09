@@ -1,4 +1,5 @@
 """Navigation menu configuration for NetBox ZPL Labels plugin."""
+
 from django.utils.translation import gettext_lazy as _
 from netbox.plugins import PluginMenu, PluginMenuButton, PluginMenuItem
 

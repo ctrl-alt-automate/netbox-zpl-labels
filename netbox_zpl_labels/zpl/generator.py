@@ -4,6 +4,7 @@ This module generates ZPL (Zebra Programming Language) code for cable labels
 from NetBox Cable objects. It supports various label sizes and includes
 QR codes linking back to NetBox.
 """
+
 from __future__ import annotations
 
 import re
