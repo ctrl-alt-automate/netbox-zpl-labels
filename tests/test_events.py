@@ -84,10 +84,16 @@ class TestCreatePrintJobEventData:
         user = MagicMock()
         user.username = "testuser"
 
+        # Mock content_type for GenericForeignKey
+        content_type = MagicMock()
+        content_type.model = "cable"
+
         job = MagicMock()
         job.pk = 42
-        job.cable_id = 1
-        job.cable = cable
+        job.content_type = content_type
+        job.object_id = 1
+        job.labeled_object = cable
+        job.cable = cable  # Backwards compat property
         job.printer_id = 2
         job.printer = printer
         job.template_id = 3
@@ -102,8 +108,11 @@ class TestCreatePrintJobEventData:
 
         # Check all required fields are present
         assert "print_job_id" in data
-        assert "cable_id" in data
-        assert "cable" in data
+        assert "object_type" in data
+        assert "object_id" in data
+        assert "object" in data
+        assert "cable_id" in data  # Backwards compat
+        assert "cable" in data  # Backwards compat
         assert "printer_id" in data
         assert "printer" in data
         assert "template_id" in data
@@ -116,7 +125,10 @@ class TestCreatePrintJobEventData:
 
         # Check values
         assert data["print_job_id"] == 42
-        assert data["cable"] == "CBL-001"
+        assert data["object_type"] == "cable"
+        assert data["object_id"] == 1
+        assert data["object"] == "CBL-001"
+        assert data["cable"] == "CBL-001"  # Backwards compat
         assert data["printer"] == "Printer-01"
         assert data["template"] == "Standard Label"
         assert data["quantity"] == 5
@@ -129,8 +141,10 @@ class TestCreatePrintJobEventData:
 
         job = MagicMock()
         job.pk = 1
-        job.cable_id = None
-        job.cable = None
+        job.content_type = None
+        job.object_id = None
+        job.labeled_object = None
+        job.cable = None  # Backwards compat property
         job.printer_id = None
         job.printer = None
         job.template_id = None
@@ -143,6 +157,8 @@ class TestCreatePrintJobEventData:
 
         data = create_print_job_event_data(job)
 
+        assert data["object_type"] is None
+        assert data["object"] is None
         assert data["cable"] is None
         assert data["printer"] is None
         assert data["template"] is None
@@ -154,10 +170,17 @@ class TestCreatePrintJobEventData:
         """Test that empty error_message becomes None."""
         from netbox_zpl_labels.events import create_print_job_event_data
 
+        content_type = MagicMock()
+        content_type.model = "cable"
+
+        cable = MagicMock(__str__=MagicMock(return_value="CBL"))
+
         job = MagicMock()
         job.pk = 1
-        job.cable_id = 1
-        job.cable = MagicMock(__str__=MagicMock(return_value="CBL"))
+        job.content_type = content_type
+        job.object_id = 1
+        job.labeled_object = cable
+        job.cable = cable
         job.printer_id = 1
         job.printer = MagicMock(__str__=MagicMock(return_value="P"))
         job.template_id = 1
@@ -179,10 +202,17 @@ class TestCreatePrintJobEventData:
 
         from netbox_zpl_labels.events import create_print_job_event_data
 
+        content_type = MagicMock()
+        content_type.model = "cable"
+
+        cable = MagicMock(__str__=MagicMock(return_value="CBL"))
+
         job = MagicMock()
         job.pk = 1
-        job.cable_id = 1
-        job.cable = MagicMock(__str__=MagicMock(return_value="CBL"))
+        job.content_type = content_type
+        job.object_id = 1
+        job.labeled_object = cable
+        job.cable = cable
         job.printer_id = 1
         job.printer = MagicMock(__str__=MagicMock(return_value="P"))
         job.template_id = 1
