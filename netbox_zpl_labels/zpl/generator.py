@@ -987,3 +987,64 @@ def generate_cable_label(
         data=data,
         quantity=quantity,
     )
+
+
+def generate_device_label(
+    device: Device,
+    template: LabelTemplate,
+    quantity: int = 1,
+    base_url: str = "",
+) -> str:
+    """Generate ZPL code for a device label.
+
+    Convenience function that creates a ZPLGenerator and generates
+    label code from a Device and LabelTemplate.
+
+    Args:
+        device: NetBox Device instance
+        template: LabelTemplate instance
+        quantity: Number of labels to print
+        base_url: Base URL for NetBox
+
+    Returns:
+        Complete ZPL code string
+    """
+    generator = ZPLGenerator(dpi=template.dpi)
+    data = DeviceLabelData.from_device(device, base_url)
+    return generator.generate_from_template(
+        template=template.zpl_template,
+        data=data.to_dict(),
+        quantity=quantity,
+    )
+
+
+def generate_label(
+    obj: Any,
+    template: LabelTemplate,
+    quantity: int = 1,
+    base_url: str = "",
+) -> str:
+    """Generate ZPL code for any supported object.
+
+    Generic label generation function that determines the object type
+    and generates appropriate label data.
+
+    Args:
+        obj: NetBox object (Cable, Device, Rack, etc.)
+        template: LabelTemplate instance
+        quantity: Number of labels to print
+        base_url: Base URL for NetBox
+
+    Returns:
+        Complete ZPL code string
+
+    Raises:
+        ValueError: If object type is not supported
+    """
+    generator = ZPLGenerator(dpi=template.dpi)
+    data = create_label_data(obj, base_url)
+    return generator.generate_from_template(
+        template=template.zpl_template,
+        data=data,
+        quantity=quantity,
+    )

@@ -7,6 +7,8 @@ from .generator import (
     ZPLGenerator,
     create_label_data,
     generate_cable_label,
+    generate_device_label,
+    generate_label,
     sanitize_zpl_template,
     validate_zpl_template,
 )
@@ -21,6 +23,8 @@ __all__ = [
     "create_label_data",
     "SUPPORTED_OBJECT_TYPES",
     "generate_cable_label",
+    "generate_device_label",
+    "generate_label",
     "validate_zpl_template",
     "sanitize_zpl_template",
     "ZPLPrinterClient",

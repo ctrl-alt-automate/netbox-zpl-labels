@@ -175,4 +175,25 @@ urlpatterns = [
         views.CableBulkPrintLabelsView.as_view(),
         name="cable_bulk_print",
     ),
+    # Device Label URLs
+    path(
+        "devices/<int:pk>/print/",
+        views.DevicePrintLabelView.as_view(),
+        name="device_print_label",
+    ),
+    path(
+        "devices/<int:pk>/preview/",
+        views.DeviceLabelPreviewView.as_view(),
+        name="device_label_preview",
+    ),
+    path(
+        "devices/<int:pk>/download/",
+        views.DeviceLabelDownloadView.as_view(),
+        name="device_label_download",
+    ),
+    path(
+        "devices/bulk-print/",
+        views.DeviceBulkPrintLabelsView.as_view(),
+        name="device_bulk_print",
+    ),
 ]

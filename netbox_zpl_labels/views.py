@@ -1,6 +1,6 @@
 """Views for NetBox ZPL Labels plugin."""
 
-from dcim.models import Cable
+from dcim.models import Cable, Device
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse
@@ -27,7 +27,7 @@ from .forms import (
 )
 from .models import LabelTemplate, PrintJob, ZPLPrinter
 from .tables import LabelTemplateTable, PrintJobTable, ZPLPrinterTable
-from .zpl import generate_cable_label, get_label_preview, send_to_printer
+from .zpl import generate_cable_label, generate_device_label, get_label_preview, send_to_printer
 
 #
 # ZPLPrinter Views
@@ -574,6 +574,277 @@ class CableBulkPrintLabelsView(GetReturnURLMixin, View):
             self.template_name,
             {
                 "cables": cables,
+                "form": form,
+                "printers": ZPLPrinter.objects.filter(status="active"),
+                "templates": LabelTemplate.objects.all(),
+                "return_url": self.get_return_url(request),
+            },
+        )
+
+
+#
+# Device Label Printing Views
+#
+
+
+class DevicePrintLabelView(generic.ObjectView):
+    """View for printing a label for a specific device."""
+
+    queryset = Device.objects.all()
+    template_name = "netbox_zpl_labels/device_print_label.html"
+
+    def get_extra_context(self, request, instance):
+        """Provide form and available printers/templates."""
+        form = PrintLabelForm()
+        preview_form = PreviewLabelForm()
+
+        return {
+            "form": form,
+            "preview_form": preview_form,
+            "printers": ZPLPrinter.objects.filter(status="active"),
+            "templates": LabelTemplate.objects.all(),
+            "active_tab": "print-label",
+        }
+
+    def post(self, request, pk):
+        """Handle label print request."""
+        device = get_object_or_404(Device, pk=pk)
+        form = PrintLabelForm(request.POST)
+
+        if form.is_valid():
+            printer = form.cleaned_data["printer"]
+            template = form.cleaned_data["template"]
+            quantity = form.cleaned_data["quantity"]
+
+            # Generate ZPL
+            base_url = request.build_absolute_uri("/").rstrip("/")
+            zpl_content = generate_device_label(
+                device=device,
+                template=template,
+                quantity=quantity,
+                base_url=base_url,
+            )
+
+            # Send to printer
+            success, error = send_to_printer(
+                host=printer.host,
+                port=printer.port,
+                zpl_content=zpl_content,
+            )
+
+            # Log print job
+            PrintJob.objects.create(
+                content_type=ContentType.objects.get_for_model(device),
+                object_id=device.pk,
+                printer=printer,
+                template=template,
+                quantity=quantity,
+                zpl_content=zpl_content,
+                success=success,
+                error_message=error or "",
+                printed_by=request.user if request.user.is_authenticated else None,
+            )
+
+            if success:
+                messages.success(
+                    request,
+                    _("Label printed successfully to {printer}").format(printer=printer.name),
+                )
+            else:
+                messages.error(
+                    request,
+                    _("Print failed: {error}").format(error=error),
+                )
+
+            return redirect(device.get_absolute_url())
+
+        # Form invalid, re-render
+        return render(
+            request,
+            self.template_name,
+            {
+                "object": device,
+                "form": form,
+                "preview_form": PreviewLabelForm(),
+                "printers": ZPLPrinter.objects.filter(status="active"),
+                "templates": LabelTemplate.objects.all(),
+                "active_tab": "print-label",
+            },
+        )
+
+
+class DeviceLabelPreviewView(View):
+    """Generate preview for a device label."""
+
+    def get(self, request, pk):
+        device = get_object_or_404(Device, pk=pk)
+        template_id = request.GET.get("template")
+
+        if not template_id:
+            return JsonResponse({"error": "Template ID required"}, status=400)
+
+        template = get_object_or_404(LabelTemplate, pk=template_id)
+
+        # Generate ZPL
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        zpl_content = generate_device_label(
+            device=device,
+            template=template,
+            quantity=1,
+            base_url=base_url,
+        )
+
+        # Generate preview
+        result = get_label_preview(
+            zpl=zpl_content,
+            dpi=template.dpi,
+            width_mm=float(template.width_mm),
+            height_mm=float(template.height_mm),
+        )
+
+        if result.success and result.image_data:
+            return HttpResponse(
+                result.image_data,
+                content_type=result.content_type,
+            )
+        else:
+            return JsonResponse(
+                {"error": result.error or "Preview generation failed"},
+                status=500,
+            )
+
+
+class DeviceLabelDownloadView(View):
+    """Download ZPL code for a device label."""
+
+    def get(self, request, pk):
+        device = get_object_or_404(Device, pk=pk)
+        template_id = request.GET.get("template")
+
+        if not template_id:
+            # Use default template
+            template = LabelTemplate.objects.filter(is_default=True).first()
+            if not template:
+                template = LabelTemplate.objects.first()
+        else:
+            template = get_object_or_404(LabelTemplate, pk=template_id)
+
+        if not template:
+            return JsonResponse({"error": "No template available"}, status=400)
+
+        # Generate ZPL
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        zpl_content = generate_device_label(
+            device=device,
+            template=template,
+            quantity=1,
+            base_url=base_url,
+        )
+
+        # Return as downloadable file
+        response = HttpResponse(zpl_content, content_type="text/plain")
+        filename = f"device_{device.pk}_{device.name or 'label'}.zpl"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
+class DeviceBulkPrintLabelsView(GetReturnURLMixin, View):
+    """Bulk print labels for multiple devices."""
+
+    template_name = "netbox_zpl_labels/device_bulk_print.html"
+
+    def get(self, request):
+        """Display form for bulk printing."""
+        pk_list = request.GET.getlist("pk")
+
+        if not pk_list:
+            messages.warning(request, _("No devices selected."))
+            return redirect("dcim:device_list")
+
+        devices = Device.objects.filter(pk__in=pk_list)
+
+        if not devices:
+            messages.warning(request, _("No devices found."))
+            return redirect("dcim:device_list")
+
+        form = BulkPrintLabelForm(initial={"pk": pk_list})
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "devices": devices,
+                "form": form,
+                "printers": ZPLPrinter.objects.filter(status="active"),
+                "templates": LabelTemplate.objects.all(),
+                "return_url": self.get_return_url(request),
+            },
+        )
+
+    def post(self, request):
+        """Process bulk print request."""
+        pk_list = request.POST.getlist("pk")
+        devices = Device.objects.filter(pk__in=pk_list)
+        form = BulkPrintLabelForm(request.POST)
+
+        if form.is_valid():
+            printer = form.cleaned_data["printer"]
+            template = form.cleaned_data["template"]
+            quantity_per_device = form.cleaned_data["quantity_per_cable"]
+
+            base_url = request.build_absolute_uri("/").rstrip("/")
+            success_count = 0
+            error_count = 0
+
+            for device in devices:
+                zpl_content = generate_device_label(
+                    device=device,
+                    template=template,
+                    quantity=quantity_per_device,
+                    base_url=base_url,
+                )
+
+                success, error = send_to_printer(
+                    host=printer.host,
+                    port=printer.port,
+                    zpl_content=zpl_content,
+                )
+
+                PrintJob.objects.create(
+                    content_type=ContentType.objects.get_for_model(device),
+                    object_id=device.pk,
+                    printer=printer,
+                    template=template,
+                    quantity=quantity_per_device,
+                    zpl_content=zpl_content,
+                    success=success,
+                    error_message=error or "",
+                    printed_by=request.user if request.user.is_authenticated else None,
+                )
+
+                if success:
+                    success_count += 1
+                else:
+                    error_count += 1
+
+            if success_count:
+                messages.success(
+                    request,
+                    _("Printed {count} labels successfully.").format(count=success_count),
+                )
+            if error_count:
+                messages.error(
+                    request,
+                    _("Failed to print {count} labels.").format(count=error_count),
+                )
+
+            return redirect(self.get_return_url(request))
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "devices": devices,
                 "form": form,
                 "printers": ZPLPrinter.objects.filter(status="active"),
                 "templates": LabelTemplate.objects.all(),
