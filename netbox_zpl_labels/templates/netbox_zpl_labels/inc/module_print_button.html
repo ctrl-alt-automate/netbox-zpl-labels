@@ -1,0 +1,17 @@
+<div class="btn-group">
+    <a href="{% url 'plugins:netbox_zpl_labels:module_print_label' pk=module.pk %}"
+       class="btn btn-sm btn-primary">
+        <i class="mdi mdi-printer"></i> Print Label
+    </a>
+    <button type="button" class="btn btn-sm btn-primary dropdown-toggle dropdown-toggle-split"
+            data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="visually-hidden">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu">
+        <li>
+            <a class="dropdown-item" href="{% url 'plugins:netbox_zpl_labels:module_label_download' pk=module.pk %}">
+                <i class="mdi mdi-download"></i> Download ZPL
+            </a>
+        </li>
+    </ul>
+</div>

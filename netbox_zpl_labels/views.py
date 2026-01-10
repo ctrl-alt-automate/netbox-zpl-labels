@@ -1,6 +1,7 @@
 """Views for NetBox ZPL Labels plugin."""
 
-from dcim.models import Cable, Device
+from circuits.models import Circuit
+from dcim.models import Cable, Device, Location, Module, PowerFeed, PowerPanel, Rack, Site
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse
@@ -27,7 +28,13 @@ from .forms import (
 )
 from .models import LabelTemplate, PrintJob, ZPLPrinter
 from .tables import LabelTemplateTable, PrintJobTable, ZPLPrinterTable
-from .zpl import generate_cable_label, generate_device_label, get_label_preview, send_to_printer
+from .zpl import (
+    generate_cable_label,
+    generate_device_label,
+    generate_label,
+    get_label_preview,
+    send_to_printer,
+)
 
 #
 # ZPLPrinter Views
@@ -851,3 +858,316 @@ class DeviceBulkPrintLabelsView(GetReturnURLMixin, View):
                 "return_url": self.get_return_url(request),
             },
         )
+
+
+#
+# Generic Object Label Views (for remaining object types)
+#
+
+
+class GenericPrintLabelView(View):
+    """Generic view for printing labels for NetBox objects."""
+
+    model = None
+    template_name = None
+    object_name = None  # e.g., "rack", "module"
+
+    def get_object(self, pk):
+        return get_object_or_404(self.model, pk=pk)
+
+    def get(self, request, pk):
+        obj = self.get_object(pk)
+        form = PrintLabelForm()
+        preview_form = PreviewLabelForm()
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "object": obj,
+                self.object_name: obj,
+                "form": form,
+                "preview_form": preview_form,
+                "printers": ZPLPrinter.objects.filter(status="active"),
+                "templates": LabelTemplate.objects.all(),
+                "active_tab": "print-label",
+            },
+        )
+
+    def post(self, request, pk):
+        obj = self.get_object(pk)
+        form = PrintLabelForm(request.POST)
+
+        if form.is_valid():
+            printer = form.cleaned_data["printer"]
+            template = form.cleaned_data["template"]
+            quantity = form.cleaned_data["quantity"]
+
+            base_url = request.build_absolute_uri("/").rstrip("/")
+            zpl_content = generate_label(
+                obj=obj,
+                template=template,
+                quantity=quantity,
+                base_url=base_url,
+            )
+
+            success, error = send_to_printer(
+                host=printer.host,
+                port=printer.port,
+                zpl_content=zpl_content,
+            )
+
+            PrintJob.objects.create(
+                content_type=ContentType.objects.get_for_model(obj),
+                object_id=obj.pk,
+                printer=printer,
+                template=template,
+                quantity=quantity,
+                zpl_content=zpl_content,
+                success=success,
+                error_message=error or "",
+                printed_by=request.user if request.user.is_authenticated else None,
+            )
+
+            if success:
+                messages.success(
+                    request,
+                    _("Label printed successfully to {printer}").format(printer=printer.name),
+                )
+            else:
+                messages.error(
+                    request,
+                    _("Print failed: {error}").format(error=error),
+                )
+
+            return redirect(obj.get_absolute_url())
+
+        return render(
+            request,
+            self.template_name,
+            {
+                "object": obj,
+                self.object_name: obj,
+                "form": form,
+                "preview_form": PreviewLabelForm(),
+                "printers": ZPLPrinter.objects.filter(status="active"),
+                "templates": LabelTemplate.objects.all(),
+                "active_tab": "print-label",
+            },
+        )
+
+
+class GenericLabelPreviewView(View):
+    """Generic view for generating label previews."""
+
+    model = None
+
+    def get(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk)
+        template_id = request.GET.get("template")
+
+        if not template_id:
+            return JsonResponse({"error": "Template ID required"}, status=400)
+
+        template = get_object_or_404(LabelTemplate, pk=template_id)
+
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        zpl_content = generate_label(
+            obj=obj,
+            template=template,
+            quantity=1,
+            base_url=base_url,
+        )
+
+        result = get_label_preview(
+            zpl=zpl_content,
+            dpi=template.dpi,
+            width_mm=float(template.width_mm),
+            height_mm=float(template.height_mm),
+        )
+
+        if result.success and result.image_data:
+            return HttpResponse(
+                result.image_data,
+                content_type=result.content_type,
+            )
+        else:
+            return JsonResponse(
+                {"error": result.error or "Preview generation failed"},
+                status=500,
+            )
+
+
+class GenericLabelDownloadView(View):
+    """Generic view for downloading ZPL code."""
+
+    model = None
+    filename_prefix = None
+
+    def get(self, request, pk):
+        obj = get_object_or_404(self.model, pk=pk)
+        template_id = request.GET.get("template")
+
+        if not template_id:
+            template = LabelTemplate.objects.filter(is_default=True).first()
+            if not template:
+                template = LabelTemplate.objects.first()
+        else:
+            template = get_object_or_404(LabelTemplate, pk=template_id)
+
+        if not template:
+            return JsonResponse({"error": "No template available"}, status=400)
+
+        base_url = request.build_absolute_uri("/").rstrip("/")
+        zpl_content = generate_label(
+            obj=obj,
+            template=template,
+            quantity=1,
+            base_url=base_url,
+        )
+
+        response = HttpResponse(zpl_content, content_type="text/plain")
+        obj_name = getattr(obj, "name", None) or str(obj.pk)
+        filename = f"{self.filename_prefix}_{obj.pk}_{obj_name}.zpl"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+
+#
+# Rack Label Views
+#
+
+
+class RackPrintLabelView(GenericPrintLabelView):
+    model = Rack
+    template_name = "netbox_zpl_labels/rack_print_label.html"
+    object_name = "rack"
+
+
+class RackLabelPreviewView(GenericLabelPreviewView):
+    model = Rack
+
+
+class RackLabelDownloadView(GenericLabelDownloadView):
+    model = Rack
+    filename_prefix = "rack"
+
+
+#
+# Module Label Views
+#
+
+
+class ModulePrintLabelView(GenericPrintLabelView):
+    model = Module
+    template_name = "netbox_zpl_labels/module_print_label.html"
+    object_name = "module"
+
+
+class ModuleLabelPreviewView(GenericLabelPreviewView):
+    model = Module
+
+
+class ModuleLabelDownloadView(GenericLabelDownloadView):
+    model = Module
+    filename_prefix = "module"
+
+
+#
+# Circuit Label Views
+#
+
+
+class CircuitPrintLabelView(GenericPrintLabelView):
+    model = Circuit
+    template_name = "netbox_zpl_labels/circuit_print_label.html"
+    object_name = "circuit"
+
+
+class CircuitLabelPreviewView(GenericLabelPreviewView):
+    model = Circuit
+
+
+class CircuitLabelDownloadView(GenericLabelDownloadView):
+    model = Circuit
+    filename_prefix = "circuit"
+
+
+#
+# PowerFeed Label Views
+#
+
+
+class PowerFeedPrintLabelView(GenericPrintLabelView):
+    model = PowerFeed
+    template_name = "netbox_zpl_labels/powerfeed_print_label.html"
+    object_name = "powerfeed"
+
+
+class PowerFeedLabelPreviewView(GenericLabelPreviewView):
+    model = PowerFeed
+
+
+class PowerFeedLabelDownloadView(GenericLabelDownloadView):
+    model = PowerFeed
+    filename_prefix = "powerfeed"
+
+
+#
+# PowerPanel Label Views
+#
+
+
+class PowerPanelPrintLabelView(GenericPrintLabelView):
+    model = PowerPanel
+    template_name = "netbox_zpl_labels/powerpanel_print_label.html"
+    object_name = "powerpanel"
+
+
+class PowerPanelLabelPreviewView(GenericLabelPreviewView):
+    model = PowerPanel
+
+
+class PowerPanelLabelDownloadView(GenericLabelDownloadView):
+    model = PowerPanel
+    filename_prefix = "powerpanel"
+
+
+#
+# Location Label Views
+#
+
+
+class LocationPrintLabelView(GenericPrintLabelView):
+    model = Location
+    template_name = "netbox_zpl_labels/location_print_label.html"
+    object_name = "location"
+
+
+class LocationLabelPreviewView(GenericLabelPreviewView):
+    model = Location
+
+
+class LocationLabelDownloadView(GenericLabelDownloadView):
+    model = Location
+    filename_prefix = "location"
+
+
+#
+# Site Label Views
+#
+
+
+class SitePrintLabelView(GenericPrintLabelView):
+    model = Site
+    template_name = "netbox_zpl_labels/site_print_label.html"
+    object_name = "site"
+
+
+class SiteLabelPreviewView(GenericLabelPreviewView):
+    model = Site
+
+
+class SiteLabelDownloadView(GenericLabelDownloadView):
+    model = Site
+    filename_prefix = "site"

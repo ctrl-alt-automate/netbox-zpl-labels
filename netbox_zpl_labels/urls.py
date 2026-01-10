@@ -196,4 +196,116 @@ urlpatterns = [
         views.DeviceBulkPrintLabelsView.as_view(),
         name="device_bulk_print",
     ),
+    # Rack Label URLs
+    path(
+        "racks/<int:pk>/print/",
+        views.RackPrintLabelView.as_view(),
+        name="rack_print_label",
+    ),
+    path(
+        "racks/<int:pk>/preview/",
+        views.RackLabelPreviewView.as_view(),
+        name="rack_label_preview",
+    ),
+    path(
+        "racks/<int:pk>/download/",
+        views.RackLabelDownloadView.as_view(),
+        name="rack_label_download",
+    ),
+    # Module Label URLs
+    path(
+        "modules/<int:pk>/print/",
+        views.ModulePrintLabelView.as_view(),
+        name="module_print_label",
+    ),
+    path(
+        "modules/<int:pk>/preview/",
+        views.ModuleLabelPreviewView.as_view(),
+        name="module_label_preview",
+    ),
+    path(
+        "modules/<int:pk>/download/",
+        views.ModuleLabelDownloadView.as_view(),
+        name="module_label_download",
+    ),
+    # Circuit Label URLs
+    path(
+        "circuits/<int:pk>/print/",
+        views.CircuitPrintLabelView.as_view(),
+        name="circuit_print_label",
+    ),
+    path(
+        "circuits/<int:pk>/preview/",
+        views.CircuitLabelPreviewView.as_view(),
+        name="circuit_label_preview",
+    ),
+    path(
+        "circuits/<int:pk>/download/",
+        views.CircuitLabelDownloadView.as_view(),
+        name="circuit_label_download",
+    ),
+    # PowerFeed Label URLs
+    path(
+        "power-feeds/<int:pk>/print/",
+        views.PowerFeedPrintLabelView.as_view(),
+        name="powerfeed_print_label",
+    ),
+    path(
+        "power-feeds/<int:pk>/preview/",
+        views.PowerFeedLabelPreviewView.as_view(),
+        name="powerfeed_label_preview",
+    ),
+    path(
+        "power-feeds/<int:pk>/download/",
+        views.PowerFeedLabelDownloadView.as_view(),
+        name="powerfeed_label_download",
+    ),
+    # PowerPanel Label URLs
+    path(
+        "power-panels/<int:pk>/print/",
+        views.PowerPanelPrintLabelView.as_view(),
+        name="powerpanel_print_label",
+    ),
+    path(
+        "power-panels/<int:pk>/preview/",
+        views.PowerPanelLabelPreviewView.as_view(),
+        name="powerpanel_label_preview",
+    ),
+    path(
+        "power-panels/<int:pk>/download/",
+        views.PowerPanelLabelDownloadView.as_view(),
+        name="powerpanel_label_download",
+    ),
+    # Location Label URLs
+    path(
+        "locations/<int:pk>/print/",
+        views.LocationPrintLabelView.as_view(),
+        name="location_print_label",
+    ),
+    path(
+        "locations/<int:pk>/preview/",
+        views.LocationLabelPreviewView.as_view(),
+        name="location_label_preview",
+    ),
+    path(
+        "locations/<int:pk>/download/",
+        views.LocationLabelDownloadView.as_view(),
+        name="location_label_download",
+    ),
+    # Site Label URLs
+    path(
+        "sites/<int:pk>/print/",
+        views.SitePrintLabelView.as_view(),
+        name="site_print_label",
+    ),
+    path(
+        "sites/<int:pk>/preview/",
+        views.SiteLabelPreviewView.as_view(),
+        name="site_label_preview",
+    ),
+    path(
+        "sites/<int:pk>/download/",
+        views.SiteLabelDownloadView.as_view(),
+        name="site_label_download",
+    ),
 ]

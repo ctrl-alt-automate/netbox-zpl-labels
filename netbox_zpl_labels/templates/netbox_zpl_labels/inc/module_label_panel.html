@@ -1,0 +1,51 @@
+{% load i18n %}
+
+<div class="card">
+    <h5 class="card-header">
+        <i class="mdi mdi-label-multiple-outline"></i> Label Printing
+    </h5>
+    <div class="card-body">
+        {% if default_template %}
+        <p class="text-muted small mb-2">
+            Default template: <strong>{{ default_template.name }}</strong>
+        </p>
+        {% endif %}
+
+        <div class="d-grid gap-2">
+            <a href="{% url 'plugins:netbox_zpl_labels:module_print_label' pk=module.pk %}"
+               class="btn btn-primary btn-sm">
+                <i class="mdi mdi-printer"></i> Print Label
+            </a>
+            <a href="{% url 'plugins:netbox_zpl_labels:module_label_download' pk=module.pk %}"
+               class="btn btn-outline-secondary btn-sm">
+                <i class="mdi mdi-download"></i> Download ZPL
+            </a>
+        </div>
+
+        {% if recent_jobs %}
+        <hr>
+        <h6 class="text-muted">Recent Print Jobs</h6>
+        <ul class="list-unstyled small">
+            {% for job in recent_jobs %}
+            <li class="mb-1">
+                {% if job.success %}
+                <span class="badge bg-success">OK</span>
+                {% else %}
+                <span class="badge bg-danger">Failed</span>
+                {% endif %}
+                <a href="{{ job.get_absolute_url }}">
+                    {{ job.created|date:"SHORT_DATETIME_FORMAT" }}
+                </a>
+                <span class="text-muted">
+                    {% if job.printer %}{{ job.printer.name }}{% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+        <a href="{% url 'plugins:netbox_zpl_labels:printjob_list' %}?object_id={{ module.pk }}"
+           class="small">
+            View all print history &raquo;
+        </a>
+        {% endif %}
+    </div>
+</div>
