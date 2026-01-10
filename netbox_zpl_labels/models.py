@@ -1,5 +1,7 @@
 """Data models for NetBox ZPL Labels plugin."""
 
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -7,6 +9,20 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from netbox.models import NetBoxModel
 from utilities.choices import ChoiceSet
+
+
+# Supported object types for label printing
+LABELABLE_MODELS = [
+    "dcim.cable",
+    "dcim.device",
+    "dcim.rack",
+    "dcim.module",
+    "dcim.location",
+    "dcim.site",
+    "circuits.circuit",
+    "dcim.powerfeed",
+    "dcim.powerpanel",
+]
 
 
 class PrinterStatusChoices(ChoiceSet):
@@ -357,14 +373,21 @@ class PrintJob(NetBoxModel):
     """Model tracking print job history.
 
     Records all label print operations for auditing and troubleshooting.
+    Supports printing labels for various DCIM objects via GenericForeignKey.
     """
 
-    cable = models.ForeignKey(
-        to="dcim.Cable",
+    # Generic relation to support multiple object types
+    content_type = models.ForeignKey(
+        to=ContentType,
         on_delete=models.CASCADE,
-        related_name="zpl_print_jobs",
-        verbose_name=_("cable"),
+        verbose_name=_("object type"),
+        help_text=_("Type of object this label was printed for"),
     )
+    object_id = models.PositiveIntegerField(
+        verbose_name=_("object ID"),
+    )
+    labeled_object = GenericForeignKey("content_type", "object_id")
+
     printer = models.ForeignKey(
         to=ZPLPrinter,
         on_delete=models.SET_NULL,
@@ -414,10 +437,28 @@ class PrintJob(NetBoxModel):
         ordering = ["-created"]
         verbose_name = _("print job")
         verbose_name_plural = _("print jobs")
+        indexes = [
+            models.Index(fields=["content_type", "object_id"]),
+        ]
 
     def __str__(self) -> str:
         status = _("OK") if self.success else _("FAILED")
-        return f"Print #{self.pk} - {self.cable} [{status}]"
+        obj_str = str(self.labeled_object) if self.labeled_object else f"#{self.object_id}"
+        return f"Print #{self.pk} - {obj_str} [{status}]"
 
     def get_absolute_url(self) -> str:
         return str(reverse("plugins:netbox_zpl_labels:printjob", args=[self.pk]))
+
+    @property
+    def cable(self):
+        """Backwards compatibility: return labeled_object if it's a Cable."""
+        if self.content_type and self.content_type.model == "cable":
+            return self.labeled_object
+        return None
+
+    @property
+    def object_type_name(self) -> str:
+        """Return human-readable name of the object type."""
+        if self.content_type:
+            return self.content_type.model_class()._meta.verbose_name.title()
+        return ""

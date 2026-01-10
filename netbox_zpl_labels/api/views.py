@@ -1,6 +1,7 @@
 """API views for NetBox ZPL Labels plugin."""
 
 from dcim.models import Cable
+from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from netbox.api.authentication import TokenAuthentication
@@ -172,7 +173,7 @@ class LabelTemplateViewSet(NetBoxModelViewSet):
 class PrintJobViewSet(NetBoxModelViewSet):
     """API viewset for print jobs."""
 
-    queryset = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")
+    queryset = PrintJob.objects.select_related("content_type", "printer", "template", "printed_by")
     serializer_class = PrintJobSerializer
     filterset_class = PrintJobFilterSet
 
@@ -315,9 +316,11 @@ class LabelPrintView(APIView):
                 results = client.send_zpl_batch(zpl_contents)
             except Exception as e:
                 # Connection failed entirely - mark all as failed
+                cable_ct = ContentType.objects.get_for_model(Cable)
                 for cable, zpl in cables_data:
                     job = PrintJob.objects.create(
-                        cable=cable,
+                        content_type=cable_ct,
+                        object_id=cable.pk,
                         printer=printer,
                         template=template,
                         quantity=copies,
@@ -337,9 +340,11 @@ class LabelPrintView(APIView):
                     )
             else:
                 # Create print job records and build response
+                cable_ct = ContentType.objects.get_for_model(Cable)
                 for (cable, zpl), result in zip(cables_data, results, strict=True):
                     job = PrintJob.objects.create(
-                        cable=cable,
+                        content_type=cable_ct,
+                        object_id=cable.pk,
                         printer=printer,
                         template=template,
                         quantity=copies,

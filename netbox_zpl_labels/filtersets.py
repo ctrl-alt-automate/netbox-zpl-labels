@@ -105,17 +105,21 @@ class PrintJobFilterSet(NetBoxModelFilterSet):
     success = django_filters.BooleanFilter(
         label=_("Success"),
     )
-    cable_id = django_filters.NumberFilter(
-        field_name="cable__id",
-        label=_("Cable ID"),
+    object_id = django_filters.NumberFilter(
+        field_name="object_id",
+        label=_("Object ID"),
+    )
+    content_type = django_filters.CharFilter(
+        field_name="content_type__model",
+        label=_("Object Type"),
     )
 
     class Meta:
         model = PrintJob
-        fields = ["id", "printer_id", "template_id", "success", "cable_id"]
+        fields = ["id", "printer_id", "template_id", "success", "object_id", "content_type"]
 
     def search(self, queryset, name, value):
-        """Search by cable label or error message."""
+        """Search by error message."""
         if not value.strip():
             return queryset
-        return queryset.filter(Q(cable__label__icontains=value) | Q(error_message__icontains=value))
+        return queryset.filter(Q(error_message__icontains=value))

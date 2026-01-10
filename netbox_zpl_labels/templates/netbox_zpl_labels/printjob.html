@@ -28,9 +28,17 @@
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">{% trans "Cable" %}</th>
+                    <th scope="row">{% trans "Object Type" %}</th>
+                    <td>{{ object.object_type_name }}</td>
+                </tr>
+                <tr>
+                    <th scope="row">{% trans "Labeled Object" %}</th>
                     <td>
-                        <a href="{{ object.cable.get_absolute_url }}">{{ object.cable }}</a>
+                        {% if object.labeled_object %}
+                        <a href="{{ object.labeled_object.get_absolute_url }}">{{ object.labeled_object }}</a>
+                        {% else %}
+                        {{ ''|placeholder }}
+                        {% endif %}
                     </td>
                 </tr>
                 <tr>
@@ -89,6 +97,7 @@
             <div class="card-body">
                 <pre class="mb-0" style="max-height: 400px; overflow-y: auto;"><code>{{ object.zpl_content }}</code></pre>
             </div>
+            {% if object.cable %}
             <div class="card-footer">
                 <form method="post" action="{% url 'plugins:netbox_zpl_labels:cable_label_download' pk=object.cable.pk %}">
                     {% csrf_token %}
@@ -97,6 +106,7 @@
                     </button>
                 </form>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>

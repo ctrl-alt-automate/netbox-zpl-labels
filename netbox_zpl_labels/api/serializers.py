@@ -130,7 +130,9 @@ class PrintJobSerializer(NetBoxModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name="plugins-api:netbox_zpl_labels-api:printjob-detail"
     )
-    cable = NestedCableSerializer()
+    object_type = serializers.SerializerMethodField()
+    object_id = serializers.IntegerField(read_only=True)
+    labeled_object = serializers.SerializerMethodField()
     printer = NestedZPLPrinterSerializer()
     template = NestedLabelTemplateSerializer()
 
@@ -140,7 +142,9 @@ class PrintJobSerializer(NetBoxModelSerializer):
             "id",
             "url",
             "display",
-            "cable",
+            "object_type",
+            "object_id",
+            "labeled_object",
             "printer",
             "template",
             "quantity",
@@ -152,7 +156,19 @@ class PrintJobSerializer(NetBoxModelSerializer):
             "created",
             "last_updated",
         ]
-        brief_fields = ["id", "url", "display", "cable", "success", "created"]
+        brief_fields = ["id", "url", "display", "object_type", "object_id", "success", "created"]
+
+    def get_object_type(self, obj):
+        """Return the content type model name."""
+        if obj.content_type:
+            return obj.content_type.model
+        return None
+
+    def get_labeled_object(self, obj):
+        """Return string representation of labeled object."""
+        if obj.labeled_object:
+            return str(obj.labeled_object)
+        return None
 
 
 #

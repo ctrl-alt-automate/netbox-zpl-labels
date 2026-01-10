@@ -2,6 +2,7 @@
 
 from dcim.models import Cable
 from django.contrib import messages
+from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext_lazy as _
@@ -281,7 +282,7 @@ class LabelTemplatePreviewView(View):
 class PrintJobListView(generic.ObjectListView):
     """List view for print job history."""
 
-    queryset = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")
+    queryset = PrintJob.objects.select_related("content_type", "printer", "template", "printed_by")
     table = PrintJobTable
     filterset = PrintJobFilterSet
     filterset_form = PrintJobFilterForm
@@ -293,7 +294,7 @@ class PrintJobListView(generic.ObjectListView):
 class PrintJobView(generic.ObjectView):
     """Detail view for a print job."""
 
-    queryset = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")
+    queryset = PrintJob.objects.select_related("content_type", "printer", "template", "printed_by")
 
 
 class PrintJobDeleteView(generic.ObjectDeleteView):
@@ -362,7 +363,8 @@ class CablePrintLabelView(generic.ObjectView):
 
             # Log print job
             PrintJob.objects.create(
-                cable=cable,
+                content_type=ContentType.objects.get_for_model(cable),
+                object_id=cable.pk,
                 printer=printer,
                 template=template,
                 quantity=quantity,
@@ -538,7 +540,8 @@ class CableBulkPrintLabelsView(GetReturnURLMixin, View):
                 )
 
                 PrintJob.objects.create(
-                    cable=cable,
+                    content_type=ContentType.objects.get_for_model(cable),
+                    object_id=cable.pk,
                     printer=printer,
                     template=template,
                     quantity=quantity_per_cable,

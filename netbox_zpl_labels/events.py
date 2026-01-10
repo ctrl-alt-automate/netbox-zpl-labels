@@ -42,8 +42,12 @@ def create_print_job_event_data(print_job: Any) -> dict:
     """
     return {
         "print_job_id": print_job.pk,
-        "cable_id": print_job.cable_id,
-        "cable": str(print_job.cable) if print_job.cable else None,
+        "object_type": print_job.content_type.model if print_job.content_type else None,
+        "object_id": print_job.object_id,
+        "object": str(print_job.labeled_object) if print_job.labeled_object else None,
+        # Backwards compatibility
+        "cable_id": print_job.object_id if print_job.content_type and print_job.content_type.model == "cable" else None,
+        "cable": str(print_job.labeled_object) if print_job.cable else None,
         "printer_id": print_job.printer_id,
         "printer": str(print_job.printer) if print_job.printer else None,
         "template_id": print_job.template_id,

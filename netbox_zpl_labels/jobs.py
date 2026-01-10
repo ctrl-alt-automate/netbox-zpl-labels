@@ -9,6 +9,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from django.contrib.contenttypes.models import ContentType
+
 if TYPE_CHECKING:
     pass
 
@@ -98,9 +100,11 @@ def print_labels_batch(
             results = client.send_zpl_batch(zpl_contents)
         except Exception as e:
             # Connection failed - mark all as failed
+            cable_ct = ContentType.objects.get_for_model(cables[0]) if cables else None
             for cable, zpl in cables_data:
                 job = PrintJob.objects.create(
-                    cable=cable,
+                    content_type=cable_ct,
+                    object_id=cable.pk,
                     printer=printer,
                     template=template,
                     quantity=copies,
@@ -115,9 +119,11 @@ def print_labels_batch(
             logger.error("Batch print connection failed: %s", e)
         else:
             # Process results
+            cable_ct = ContentType.objects.get_for_model(cables[0]) if cables else None
             for (cable, zpl), result in zip(cables_data, results, strict=True):
                 job = PrintJob.objects.create(
-                    cable=cable,
+                    content_type=cable_ct,
+                    object_id=cable.pk,
                     printer=printer,
                     template=template,
                     quantity=copies,

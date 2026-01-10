@@ -1,6 +1,7 @@
 """Template extensions for integrating with NetBox views."""
 
 from dcim.models import Cable
+from django.contrib.contenttypes.models import ContentType
 from netbox.plugins import PluginTemplateExtension
 
 
@@ -33,9 +34,10 @@ class CablePrintButton(PluginTemplateExtension):
         # Get default template
         default_template = LabelTemplate.objects.filter(is_default=True).first()
 
-        # Get recent print jobs for this cable
+        # Get recent print jobs for this cable using generic relation
+        cable_ct = ContentType.objects.get_for_model(Cable)
         recent_jobs = (
-            PrintJob.objects.filter(cable=obj)
+            PrintJob.objects.filter(content_type=cable_ct, object_id=obj.pk)
             .select_related("printer", "template")
             .order_by("-created")[:5]
         )

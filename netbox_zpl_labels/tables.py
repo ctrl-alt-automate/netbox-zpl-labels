@@ -119,9 +119,14 @@ class PrintJobTable(NetBoxTable):
         linkify=True,
         verbose_name=_("ID"),
     )
-    cable = tables.Column(
-        linkify=True,
-        verbose_name=_("Cable"),
+    labeled_object = tables.Column(
+        verbose_name=_("Object"),
+        accessor="labeled_object",
+        linkify=lambda record: record.labeled_object.get_absolute_url() if record.labeled_object else None,
+    )
+    object_type = tables.Column(
+        verbose_name=_("Type"),
+        accessor="object_type_name",
     )
     printer = tables.Column(
         linkify=True,
@@ -150,7 +155,8 @@ class PrintJobTable(NetBoxTable):
         fields = (
             "pk",
             "id",
-            "cable",
+            "labeled_object",
+            "object_type",
             "printer",
             "template",
             "quantity",
@@ -161,7 +167,8 @@ class PrintJobTable(NetBoxTable):
         )
         default_columns = (
             "id",
-            "cable",
+            "labeled_object",
+            "object_type",
             "printer",
             "template",
             "success",

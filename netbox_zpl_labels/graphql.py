@@ -153,7 +153,7 @@ class Query:
     ) -> list[PrintJobType]:
         """List print jobs with pagination."""
         limit = min(limit, MAX_LIMIT)
-        qs = PrintJob.objects.select_related("cable", "printer", "template", "printed_by")[
+        qs = PrintJob.objects.select_related("content_type", "printer", "template", "printed_by")[
             offset : offset + limit
         ]
         return [
