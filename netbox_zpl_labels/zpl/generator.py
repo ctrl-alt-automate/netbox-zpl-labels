@@ -24,7 +24,17 @@ if TYPE_CHECKING:
     from ..models import LabelTemplate
 
 # Supported object types for label generation
-SUPPORTED_OBJECT_TYPES = ["cable", "device"]
+SUPPORTED_OBJECT_TYPES = [
+    "cable",
+    "device",
+    "rack",
+    "module",
+    "circuit",
+    "powerfeed",
+    "powerpanel",
+    "location",
+    "site",
+]
 
 
 @dataclass
@@ -214,6 +224,373 @@ class DeviceLabelData:
         }
 
 
+@dataclass
+class RackLabelData:
+    """Data container for rack label content."""
+
+    rack_name: str = ""
+    rack_url: str = ""
+    site: str = ""
+    location: str = ""
+    facility_id: str = ""
+    tenant: str = ""
+    status: str = ""
+    role: str = ""
+    rack_type: str = ""
+    u_height: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_rack(cls, rack: Any, base_url: str = "") -> "RackLabelData":
+        """Create RackLabelData from a NetBox Rack object."""
+        rack_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            rack_url = f"{base_url}/dcim/racks/{rack.pk}/"
+
+        return cls(
+            rack_name=rack.name or "",
+            rack_url=rack_url,
+            site=str(rack.site) if rack.site else "",
+            location=str(rack.location) if rack.location else "",
+            facility_id=rack.facility_id or "",
+            tenant=str(rack.tenant) if rack.tenant else "",
+            status=rack.get_status_display() if rack.status else "",
+            role=str(rack.role) if rack.role else "",
+            rack_type=rack.get_type_display() if rack.type else "",
+            u_height=str(rack.u_height) if rack.u_height else "",
+            description=rack.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "rack_name": self.rack_name,
+            "rack_url": self.rack_url,
+            "site": self.site,
+            "location": self.location,
+            "facility_id": self.facility_id,
+            "tenant": self.tenant,
+            "status": self.status,
+            "role": self.role,
+            "rack_type": self.rack_type,
+            "u_height": self.u_height,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+@dataclass
+class ModuleLabelData:
+    """Data container for module label content."""
+
+    module_name: str = ""
+    module_url: str = ""
+    device: str = ""
+    module_bay: str = ""
+    module_type: str = ""
+    serial: str = ""
+    asset_tag: str = ""
+    status: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_module(cls, module: Any, base_url: str = "") -> "ModuleLabelData":
+        """Create ModuleLabelData from a NetBox Module object."""
+        module_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            module_url = f"{base_url}/dcim/modules/{module.pk}/"
+
+        return cls(
+            module_name=str(module) or "",
+            module_url=module_url,
+            device=str(module.device) if module.device else "",
+            module_bay=str(module.module_bay) if module.module_bay else "",
+            module_type=str(module.module_type) if module.module_type else "",
+            serial=module.serial or "",
+            asset_tag=module.asset_tag or "",
+            status=module.get_status_display() if module.status else "",
+            description=module.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "module_name": self.module_name,
+            "module_url": self.module_url,
+            "device": self.device,
+            "module_bay": self.module_bay,
+            "module_type": self.module_type,
+            "serial": self.serial,
+            "asset_tag": self.asset_tag,
+            "status": self.status,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+@dataclass
+class CircuitLabelData:
+    """Data container for circuit label content."""
+
+    circuit_id: str = ""
+    circuit_url: str = ""
+    provider: str = ""
+    circuit_type: str = ""
+    status: str = ""
+    tenant: str = ""
+    install_date: str = ""
+    commit_rate: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_circuit(cls, circuit: Any, base_url: str = "") -> "CircuitLabelData":
+        """Create CircuitLabelData from a NetBox Circuit object."""
+        circuit_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            circuit_url = f"{base_url}/circuits/circuits/{circuit.pk}/"
+
+        return cls(
+            circuit_id=circuit.cid or "",
+            circuit_url=circuit_url,
+            provider=str(circuit.provider) if circuit.provider else "",
+            circuit_type=str(circuit.type) if circuit.type else "",
+            status=circuit.get_status_display() if circuit.status else "",
+            tenant=str(circuit.tenant) if circuit.tenant else "",
+            install_date=str(circuit.install_date) if circuit.install_date else "",
+            commit_rate=str(circuit.commit_rate) if circuit.commit_rate else "",
+            description=circuit.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "circuit_id": self.circuit_id,
+            "circuit_url": self.circuit_url,
+            "provider": self.provider,
+            "circuit_type": self.circuit_type,
+            "status": self.status,
+            "tenant": self.tenant,
+            "install_date": self.install_date,
+            "commit_rate": self.commit_rate,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+@dataclass
+class PowerFeedLabelData:
+    """Data container for power feed label content."""
+
+    powerfeed_name: str = ""
+    powerfeed_url: str = ""
+    power_panel: str = ""
+    rack: str = ""
+    status: str = ""
+    feed_type: str = ""
+    supply: str = ""
+    phase: str = ""
+    voltage: str = ""
+    amperage: str = ""
+    max_utilization: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_powerfeed(cls, powerfeed: Any, base_url: str = "") -> "PowerFeedLabelData":
+        """Create PowerFeedLabelData from a NetBox PowerFeed object."""
+        powerfeed_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            powerfeed_url = f"{base_url}/dcim/power-feeds/{powerfeed.pk}/"
+
+        return cls(
+            powerfeed_name=powerfeed.name or "",
+            powerfeed_url=powerfeed_url,
+            power_panel=str(powerfeed.power_panel) if powerfeed.power_panel else "",
+            rack=str(powerfeed.rack) if powerfeed.rack else "",
+            status=powerfeed.get_status_display() if powerfeed.status else "",
+            feed_type=powerfeed.get_type_display() if powerfeed.type else "",
+            supply=powerfeed.get_supply_display() if powerfeed.supply else "",
+            phase=powerfeed.get_phase_display() if powerfeed.phase else "",
+            voltage=str(powerfeed.voltage) if powerfeed.voltage else "",
+            amperage=str(powerfeed.amperage) if powerfeed.amperage else "",
+            max_utilization=f"{powerfeed.max_utilization}%" if powerfeed.max_utilization else "",
+            description=powerfeed.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "powerfeed_name": self.powerfeed_name,
+            "powerfeed_url": self.powerfeed_url,
+            "power_panel": self.power_panel,
+            "rack": self.rack,
+            "status": self.status,
+            "feed_type": self.feed_type,
+            "supply": self.supply,
+            "phase": self.phase,
+            "voltage": self.voltage,
+            "amperage": self.amperage,
+            "max_utilization": self.max_utilization,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+@dataclass
+class PowerPanelLabelData:
+    """Data container for power panel label content."""
+
+    powerpanel_name: str = ""
+    powerpanel_url: str = ""
+    site: str = ""
+    location: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_powerpanel(cls, powerpanel: Any, base_url: str = "") -> "PowerPanelLabelData":
+        """Create PowerPanelLabelData from a NetBox PowerPanel object."""
+        powerpanel_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            powerpanel_url = f"{base_url}/dcim/power-panels/{powerpanel.pk}/"
+
+        return cls(
+            powerpanel_name=powerpanel.name or "",
+            powerpanel_url=powerpanel_url,
+            site=str(powerpanel.site) if powerpanel.site else "",
+            location=str(powerpanel.location) if powerpanel.location else "",
+            description=powerpanel.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "powerpanel_name": self.powerpanel_name,
+            "powerpanel_url": self.powerpanel_url,
+            "site": self.site,
+            "location": self.location,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+@dataclass
+class LocationLabelData:
+    """Data container for location label content."""
+
+    location_name: str = ""
+    location_url: str = ""
+    site: str = ""
+    parent: str = ""
+    status: str = ""
+    tenant: str = ""
+    facility: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_location(cls, location: Any, base_url: str = "") -> "LocationLabelData":
+        """Create LocationLabelData from a NetBox Location object."""
+        location_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            location_url = f"{base_url}/dcim/locations/{location.pk}/"
+
+        return cls(
+            location_name=location.name or "",
+            location_url=location_url,
+            site=str(location.site) if location.site else "",
+            parent=str(location.parent) if location.parent else "",
+            status=location.get_status_display() if location.status else "",
+            tenant=str(location.tenant) if location.tenant else "",
+            facility=location.facility or "",
+            description=location.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "location_name": self.location_name,
+            "location_url": self.location_url,
+            "site": self.site,
+            "parent": self.parent,
+            "status": self.status,
+            "tenant": self.tenant,
+            "facility": self.facility,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
+@dataclass
+class SiteLabelData:
+    """Data container for site label content."""
+
+    site_name: str = ""
+    site_url: str = ""
+    status: str = ""
+    region: str = ""
+    site_group: str = ""
+    tenant: str = ""
+    facility: str = ""
+    time_zone: str = ""
+    physical_address: str = ""
+    description: str = ""
+    date: str = ""
+
+    @classmethod
+    def from_site(cls, site: Any, base_url: str = "") -> "SiteLabelData":
+        """Create SiteLabelData from a NetBox Site object."""
+        site_url = ""
+        if base_url:
+            base_url = base_url.rstrip("/")
+            site_url = f"{base_url}/dcim/sites/{site.pk}/"
+
+        return cls(
+            site_name=site.name or "",
+            site_url=site_url,
+            status=site.get_status_display() if site.status else "",
+            region=str(site.region) if site.region else "",
+            site_group=str(site.group) if site.group else "",
+            tenant=str(site.tenant) if site.tenant else "",
+            facility=site.facility or "",
+            time_zone=str(site.time_zone) if site.time_zone else "",
+            physical_address=site.physical_address or "",
+            description=site.description or "",
+            date=date.today().isoformat(),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        """Convert to dictionary for template substitution."""
+        return {
+            "site_name": self.site_name,
+            "site_url": self.site_url,
+            "status": self.status,
+            "region": self.region,
+            "site_group": self.site_group,
+            "tenant": self.tenant,
+            "facility": self.facility,
+            "time_zone": self.time_zone,
+            "physical_address": self.physical_address,
+            "description": self.description,
+            "date": self.date,
+        }
+
+
 def create_label_data(obj: Any, base_url: str = "") -> dict[str, str]:
     """Create label data dictionary from any supported NetBox object.
 
@@ -255,10 +632,58 @@ def create_label_data(obj: Any, base_url: str = "") -> dict[str, str]:
     elif model_name == "device":
         device_data = DeviceLabelData.from_device(obj, base_url)
         result = device_data.to_dict()
-        # Add common fields
         result["object_id"] = device_data.device_name
         result["object_url"] = device_data.device_url
         result["object_type"] = "Device"
+        return result
+    elif model_name == "rack":
+        rack_data = RackLabelData.from_rack(obj, base_url)
+        result = rack_data.to_dict()
+        result["object_id"] = rack_data.rack_name
+        result["object_url"] = rack_data.rack_url
+        result["object_type"] = "Rack"
+        return result
+    elif model_name == "module":
+        module_data = ModuleLabelData.from_module(obj, base_url)
+        result = module_data.to_dict()
+        result["object_id"] = module_data.module_name
+        result["object_url"] = module_data.module_url
+        result["object_type"] = "Module"
+        return result
+    elif model_name == "circuit":
+        circuit_data = CircuitLabelData.from_circuit(obj, base_url)
+        result = circuit_data.to_dict()
+        result["object_id"] = circuit_data.circuit_id
+        result["object_url"] = circuit_data.circuit_url
+        result["object_type"] = "Circuit"
+        return result
+    elif model_name == "powerfeed":
+        powerfeed_data = PowerFeedLabelData.from_powerfeed(obj, base_url)
+        result = powerfeed_data.to_dict()
+        result["object_id"] = powerfeed_data.powerfeed_name
+        result["object_url"] = powerfeed_data.powerfeed_url
+        result["object_type"] = "Power Feed"
+        return result
+    elif model_name == "powerpanel":
+        powerpanel_data = PowerPanelLabelData.from_powerpanel(obj, base_url)
+        result = powerpanel_data.to_dict()
+        result["object_id"] = powerpanel_data.powerpanel_name
+        result["object_url"] = powerpanel_data.powerpanel_url
+        result["object_type"] = "Power Panel"
+        return result
+    elif model_name == "location":
+        location_data = LocationLabelData.from_location(obj, base_url)
+        result = location_data.to_dict()
+        result["object_id"] = location_data.location_name
+        result["object_url"] = location_data.location_url
+        result["object_type"] = "Location"
+        return result
+    elif model_name == "site":
+        site_data = SiteLabelData.from_site(obj, base_url)
+        result = site_data.to_dict()
+        result["object_id"] = site_data.site_name
+        result["object_url"] = site_data.site_url
+        result["object_type"] = "Site"
         return result
     else:
         raise ValueError(
